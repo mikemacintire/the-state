@@ -15,6 +15,14 @@ describe('districtWealthDelta', () => {
   it('is dragged further down by inflation', () => {
     expect(districtWealthDelta(0, 20)).toBeLessThan(districtWealthDelta(0, 0));
   });
+
+  it('is dragged further down by an education monopoly', () => {
+    expect(districtWealthDelta(0, 0, 1)).toBeLessThan(districtWealthDelta(0, 0, 0));
+  });
+
+  it('defaults educationLevel to 0 so Plan 1 callers are unaffected', () => {
+    expect(districtWealthDelta(0.2, 5)).toBe(districtWealthDelta(0.2, 5, 0));
+  });
 });
 
 describe('updateEconomy', () => {

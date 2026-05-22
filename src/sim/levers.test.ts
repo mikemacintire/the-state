@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { setTaxRate, printMoney, setPropagandaBudget } from './levers';
+import { setTaxRate, printMoney, setPropagandaBudget, setEducationLevel } from './levers';
 import { createInitialState } from './state';
 
 describe('setTaxRate', () => {
@@ -53,5 +53,21 @@ describe('setPropagandaBudget', () => {
     const s = createInitialState();
     setPropagandaBudget(s, -50);
     expect(s.propagandaBudget).toBe(0);
+  });
+});
+
+describe('setEducationLevel', () => {
+  it('sets a level within 0..1', () => {
+    const s = createInitialState();
+    setEducationLevel(s, 0.6);
+    expect(s.educationLevel).toBe(0.6);
+  });
+
+  it('clamps inputs outside 0..1', () => {
+    const s = createInitialState();
+    setEducationLevel(s, 2);
+    expect(s.educationLevel).toBe(1);
+    setEducationLevel(s, -0.3);
+    expect(s.educationLevel).toBe(0);
   });
 });

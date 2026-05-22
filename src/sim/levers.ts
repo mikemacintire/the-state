@@ -22,3 +22,8 @@ export function printMoney(state: GameState, amount: number): void {
 export function setPropagandaBudget(state: GameState, dollars: number): void {
   state.propagandaBudget = Math.max(0, dollars);
 }
+
+/** Lever 4 — Education monopoly. Set the level (0..1). Higher = more state grip. */
+export function setEducationLevel(state: GameState, level: number): void {
+  state.educationLevel = clamp(level, 0, 1);
+}
