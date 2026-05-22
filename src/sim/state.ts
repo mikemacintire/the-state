@@ -13,6 +13,11 @@ export function createInitialState(seed: number = 1): GameState {
     inflationPressure: 0,
     taxRate: CONSTANTS.startingTaxRate,
     apparatusUpkeep: CONSTANTS.initialUpkeep,
+    propagandaBudget: 0,
+    educationLevel: 0,
+    fear: 0,
+    nationalUnrest: 0,
+    nationalProsperity: 0,
     districts: INITIAL_DISTRICTS.map((d) => ({ ...d })),
     lossCause: null,
   };
