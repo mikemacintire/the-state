@@ -1,6 +1,7 @@
 # The State — Game Design Document
 
-**Status:** In progress — core model, levers, and loop/events/score locked; UI/tech pending. Legislation + Overton window designed as Expansion 1.
+**Status:** Design draft complete — all sections revised 2026-05-22 following a
+three-agent design audit. Pending final review.
 **Date:** 2026-05-22
 **Type:** Design specification
 
@@ -9,17 +10,25 @@
 ## 1. Concept
 
 *The State* is a satirical real-time management game — an inverted city-builder. The
-player **is** the state, governing a population across a map of districts. Unlike a
-city-builder, where a thriving city is success, here **a thriving population is a loss
-condition**: a prosperous, unafraid people stop believing the state's narrative and the
-state becomes irrelevant. The player's task is to keep the population miserable but
-compliant — extracting wealth, manufacturing fear, and suppressing dissent — for as long
-as possible.
+player **is** the state, governing a population across a map of districts. The job is the
+job of any state: stay solvent, stay in power, keep order. But the game is built so that
+the things that keep a state alive — extraction, fear, control — are the same things that
+grind the population down.
+
+Unlike a city-builder, where a thriving city is success, here **a thriving population is a
+loss condition**: a prosperous, unafraid people stop needing the state and stop believing
+its story, and the state becomes irrelevant.
+
+Nothing in the game tells the player to immiserate anyone. The player is simply trying to
+keep the state alive — and discovers, move by move, that survival *is* immiseration. The
+horror is emergent; the game never states its own conclusion. Left genuinely alone, the
+population thrives — that is the tragedy, and the joke.
 
 The game is built from an Austrian-economics / anarcho-capitalist perspective. Its thesis
-emerges through mechanics rather than lectures: the state produces nothing and survives
-only by extraction and coercion; its incentives are fundamentally misaligned with the
-people's flourishing.
+emerges through honestly-modelled mechanics, not lectures: the state produces nothing and
+survives only by extraction and coercion, and its incentives are structurally misaligned
+with the people's flourishing. Every lever has a real, plausible justification — the
+satire is the gap between the justification and the result.
 
 ### Tone
 
@@ -38,33 +47,34 @@ the way GTA renders its world straight and lets the systems carry the satire.
 |---|---|
 | Core format | Hybrid: clickable district map + policy dashboard |
 | Platform | Desktop application (Electron) |
-| Game loop | Real-time, pausable |
-| v1 scope | Full single era: core loop + 4 control levers, one map |
+| Game loop | Real-time, pausable — a continuous-optimization loop (see §5.1) |
+| v1 scope | Full single era: six levers, one map |
 | Win condition | Endless — survive and score (no victory screen) |
-| Simulation model | Approach A: aggregate district simulation (~9 districts) |
+| Simulation model | Approach A: aggregate district simulation (9 districts) |
 
-**v1 control levers:** money printing / inflation, propaganda, education monopoly,
-false flags & wars.
+**The six levers:** taxation, money printing, propaganda, education monopoly, repression,
+and manufactured threats & war (see §4).
 
-**Score:** years survived + Lifetime Extraction (total wealth ever looted).
+**Score:** two separate ladders — *Longest Reign* (years survived) and *Biggest Haul*
+(lifetime extraction). See §5.3.
 
-**Planned expansions (out of v1 scope):** Legislation + the Overton window
-(Expansion 1), multiple historical eras, population-cohort modeling — see §7.
+**Planned expansions (out of v1 scope):** Legislation + the Overton window (Expansion 1),
+plus further expansions — see §7.
 
 ---
 
-## 3. The core simulation model  *(LOCKED)*
+## 3. The core simulation model
 
 ### 3.1 Districts
 
 The map is one country of **9 districts**, each with a distinct character (e.g., a wealthy
 Capital, an Industrial Belt, poor Outer Wards, a Port, farmland). Districts start with
 different wealth and population so the map has texture and each district is a different
-problem.
+problem. Districts drift independently — the player is always triaging the worst one.
 
 ### 3.2 Per-district meters
 
-Each district carries four meters (0–100):
+Each district carries four meters (0–100) plus a population count:
 
 - **Wealth** — economic prosperity. Grows in a free economy; shrinks under heavy tax,
   inflation, and war.
@@ -72,21 +82,25 @@ Each district carries four meters (0–100):
 - **Awareness** — *the political awakening.* How clearly citizens see the state itself as
   the source of their misery. Rises with prosperity, education, inflation, exposed lies,
   and heavy-handed repression. Falls under an education monopoly and sustained propaganda.
-  Drives unrest conversion and false-flag exposure risk.
+  Drives unrest conversion and exposure risk.
 - **Unrest** — active anger at the regime. Rises when people are miserable *and* aware.
-  Suppressed by propaganda and external scapegoats.
+  Suppressed by propaganda, repression, and external scapegoats.
+- **Population** — the number of citizens, and the base of the district's taxable wealth.
+  Changes through emigration (see §3.9).
 
 ### 3.3 National values
 
 - **Treasury** — the state's money on hand. A survival resource, constantly spent and
-  refilled. Not a loss meter.
-- **Lifetime Extraction** — running total of all wealth ever extracted. The player's score.
+  refilled. Not a loss meter — but its exhaustion is fatal (see §3.6).
+- **Lifetime Extraction** — running total of all wealth ever extracted. One of the two
+  score axes (see §5.3).
 - **Inflation** — driven up by money printing. Erodes wealth and happiness, raises
   awareness, and devalues the Treasury itself.
 - **Perceived Threat (Fear)** — how dangerous the population believes the world is. The
-  keystone meter (see 3.5).
+  keystone meter (see §3.5).
 - **Apparatus Upkeep** — the recurring cost of the state's own machinery (enforcers,
-  officials, bureaucracy). Grows with every piece of control the player builds.
+  officials, bureaucracy). It grows when the player builds new control — *and on its own,
+  year after year* (see §3.6).
 
 ### 3.4 The two loss meters
 
@@ -97,7 +111,8 @@ The player must keep **both** below their thresholds, forever:
 - **Prosperity → "The Spell Breaks."** National aggregate of Wealth and Happiness. Rising
   Prosperity erodes the effectiveness of the Propaganda and Fear levers. At the threshold,
   narrative control fails completely — people stop believing, stop fearing, and quietly
-  drift out of the state's grip. The state is not overthrown; it is tuned out. Game over.
+  drift out of the state's grip. The state is not overthrown; it is tuned out. Game over —
+  and the game continues in a special epilogue (see §5.3).
 
 The cruel joke: the state loses when the people win.
 
@@ -118,38 +133,48 @@ The game's lesson emerges on its own: the state's incentive is to keep the peopl
 
 - **Decay** — fear fades; it must be continually re-manufactured (a permanent recurring
   cost).
-- **Cost** — false flags, wars, and fear campaigns all spend Treasury.
+- **Cost** — every fear tool spends Treasury (see §4.6).
 - **Real harm ≠ perceived harm** — the player wants scary headlines with managed reality.
   Real war damage or real unchecked crime craters Happiness, and the people may conclude
   the state is failing its one job → Unrest.
-- **Exposure** — false flags can be uncovered (chance rises with Awareness), causing a
-  catastrophic Awareness + Unrest spike.
+- **Exposure** — a manufactured threat can be uncovered (chance rises with Awareness),
+  causing a catastrophic Awareness + Unrest spike.
 - **Fatigue** — repeated scares lose potency; fresher, bigger threats are needed over time.
 
-### 3.6 The fiscal vise — money as the second pillar
+### 3.6 The fiscal vise — money, and the bureaucracy that eats it
 
 The state produces nothing. Every coin is extracted — taxed from the productive economy or
 printed (quiet theft via inflation). There is no other income.
 
-- **Everything costs money, forever** — every lever is a recurring drain, plus Apparatus
-  Upkeep, which grows with the size of the control apparatus. The apparatus is a ratchet:
-  easy to grow, painful to cut (cutting means losing grip).
-- **The vise** — costs only climb; income comes from an economy the player is deliberately
-  strangling to hold Prosperity down. The jaws close. (The historical pattern — e.g., the
-  USSR collapsed not with a bang but a budget.)
+- **Everything costs money, forever** — every lever is a recurring drain, on top of
+  Apparatus Upkeep.
+- **The bureaucracy grows on its own.** This is the engine of the vise. The state's
+  apparatus expands year after year whether or not the player builds anything — offices
+  beget offices. Each year a little more of the population works *for* the state instead
+  of *paying* it, so Upkeep rises while the taxable base quietly shrinks. (The deadpan
+  end-state of the trend: a government of nearly everyone, funded by the last remaining
+  taxpayer.)
+- **The vise** — costs climb on their own; income comes from a productive economy the
+  player is simultaneously strangling to hold Prosperity down. The jaws close. The decline
+  is *slow* — a regime can feel stable, even comfortable, for a long stretch — but it is
+  always there and it never reverses on its own. (The historical pattern: the USSR
+  collapsed not with a bang but a budget.)
 - **Two bad ways to raise cash** — Tax (shrinks the economy, raises Unrest) or Print
   (instant, but inflation devalues all money including the Treasury, forcing more
   printing — the inflationary spiral).
-- **Bankruptcy = cascade** — Treasury at zero means propaganda and enforcers go unpaid →
+- **Bankruptcy = cascade.** Treasury at zero means propaganda and enforcers go unpaid →
   Unrest surges → Revolt. Bankruptcy doesn't end the state directly; it pries the player's
   hands off the controls. The defeat screen names the true cause.
 
 ### 3.7 The strategic core — the squeeze
 
-To hold **Prosperity** down, keep people poor (tax, inflation, war, neglect). But poverty
-breeds **Unrest** → revolt. Making people happy loses the other way. The player survives
-only by using the control levers to **suppress unrest without granting prosperity** —
-keeping the population miserable but compliant.
+The squeeze is the trap the incentives spring; the player is never told to aim for it.
+To hold **Prosperity** down, the state's tools keep people poor (tax, inflation, war,
+neglect). But poverty breeds **Unrest** → revolt. Simply making people happy loses the
+other way. So the only way the state survives is to **suppress unrest without granting
+prosperity** — and the population that produces, move by honest move, is one that is
+miserable but compliant. The player does not choose that outcome; the incentive structure
+does.
 
 **Awareness** governs how hard this is: low awareness means misery doesn't convert to
 unrest and propaganda is cheap and effective; high awareness means misery converts fast
@@ -158,29 +183,42 @@ and propaganda fails.
 **Propaganda is squeezed from both ends:** a too-aware population sees through it
 (political awakening); a too-prosperous population ignores it (lived reality contradicts
 it). Propaganda works best on an ignorant, struggling population — precisely the
-population the state is incentivized to cultivate.
+population the incentives push the state to cultivate.
 
 ### 3.8 Self-Provision events
 
 Periodically, voluntary solutions emerge that make people genuinely safer or more
 self-sufficient without the state — private security, mutual aid, private arbitration,
-sound money, independent schooling, charity outperforming state welfare. Left alone, each
-drains Perceived Threat and/or raises Prosperity, pushing the player toward loss. The
-player must respond — ban, tax, discredit, co-opt, or raid — each costing money and
-risking Awareness.
+sound money, independent schooling, charity outperforming state welfare. The player must
+respond — ban, tax, discredit, co-opt, or raid — each costing money and risking Awareness.
+
+Left un-crushed, a Self-Provision solution **visibly takes root**: its district's Wealth
+and Happiness climb and its Unrest falls — a small, working picture of life without the
+state, on the map, in plain sight (and a direct push toward The Spell Breaks).
 
 This dramatizes the game's central thought experiment: the state will oppose even
-something that helps everyone, *because* it threatens the state. Each event's strength
-varies; weak ones are cheap to ignore, strong ones force an ugly, expensive choice.
-(Full events system: §5.)
+something that helps everyone, *because* it helps everyone. Each event's strength varies;
+weak ones are cheap to ignore, strong ones force an ugly, expensive choice. (Full events
+system: §5.2.)
+
+### 3.9 Emigration — voting with their feet
+
+People can leave. A district with sustained high Unrest and high Awareness loses
+population — citizens emigrate, taking their taxable wealth with them. Emigration is the
+purest market signal in the game: it punishes the "miserable but compliant" sweet spot
+directly, because a population kept miserable long enough simply drains away — shrinking
+the tax base from a third direction, alongside the strangled economy and the swelling
+bureaucracy of §3.6. The most productive citizens leave first.
 
 ---
 
-## 4. The levers  *(LOCKED)*
+## 4. The levers
 
-Five levers. The first two raise money; the last three spend it to keep control. Each
-carries a catch — every tool the state owns also bites the hand that holds it. The model
-below is fixed in direction; the numbers (costs, rates, thresholds) are tunable (see §7).
+Six levers. The first two raise money; the other four spend it to keep control. Each
+carries a catch — every tool the state owns also bites the hand that holds it. Each also
+has a real, plausible justification: the levers are not modelled as cartoon evil, and the
+player can genuinely *try* to use them well. The model below is fixed in direction; the
+numbers (costs, rates, thresholds) are tunable (see §8).
 
 ### 4.1 Taxation — the income dial
 
@@ -193,7 +231,7 @@ below is fixed in direction; the numbers (costs, rates, thresholds) are tunable 
   - Higher felt taxation raises Unrest — sharper when Awareness is high, softer when Fear
     is high ("for your protection").
   - Low tax lets Wealth boom, which pushes Prosperity toward The Spell Breaks.
-  - There is no safe setting, only tradeoffs. This dial is the engine of the fiscal vise.
+  - There is no safe setting, only tradeoffs.
 
 ### 4.2 Money printing — the emergency tap
 
@@ -201,7 +239,7 @@ below is fixed in direction; the numbers (costs, rates, thresholds) are tunable 
 - **Effect:** immediate cash.
 - **Catches:**
   - Raises Inflation, which has momentum — it keeps climbing after printing and is slow to
-    bring down (a delayed, boom-bust crisis).
+    bring down, so the real cost lands long after the cash does.
   - Inflation erodes Wealth and Happiness across all districts.
   - Inflation raises Awareness — people notice their money vanishing.
   - Inflation devalues the Treasury itself and future tax revenue, forcing still more
@@ -211,9 +249,16 @@ below is fixed in direction; the numbers (costs, rates, thresholds) are tunable 
 
 ### 4.3 Propaganda — the rented lid
 
-- **Control:** a spending slider (Treasury per tick).
-- **Effect:** directly suppresses Unrest and slows Awareness growth; more spend = more
-  suppression, with diminishing returns.
+- **Control:** a spending budget the player allocates — a baseline level plus targeted
+  campaigns directed at specific districts or specific awareness-sources.
+- **Effect:** suppresses Unrest and slows Awareness growth; more spend = more suppression,
+  with diminishing returns.
+- **Apologists.** Part of the budget can fund an *apologist class* — credentialed experts
+  and institutions that produce respectable-looking cover for the state. When a true and
+  damaging claim gains traction (say, that the state is printing money recklessly), the
+  player can commission, e.g., a university study that concludes otherwise. Apologists are
+  more credible than raw propaganda — their output is believed — but a discredited
+  apologist (an exposed study) backfires hard.
 - **Catches:**
   - A continuous drain — stop paying and Unrest snaps back. It is a lid rented, never owned.
   - Effectiveness decays as Awareness rises (people see through it) and as Prosperity rises
@@ -224,61 +269,105 @@ below is fixed in direction; the numbers (costs, rates, thresholds) are tunable 
 
 - **Control:** a level the player invests to raise (free/private schooling → total state
   monopoly).
-- **Effect:** slows, and eventually reverses, Awareness growth — structural, generational
-  control of the population's mind.
+- **Effect:** slows, and at high levels reverses, Awareness growth — structural,
+  generational control of the population's mind.
 - **Catches:**
-  - Costly to build, and adds permanent Apparatus Upkeep (part of the fiscal ratchet).
+  - Costly to build, and adds permanent Apparatus Upkeep.
   - Slow-acting — it shapes the next generation, not today's crisis.
   - An indoctrinated, incurious population is less productive, so a high monopoly suppresses
     Wealth growth — trading a smaller tax base for a more docile one.
+  - **Diminishing, then negative, returns.** A monopoly cannot drive Awareness to zero;
+    the last increment is the most expensive, and a *total*, heavy-handed monopoly breeds
+    its own slow resentment — a brittle population that spikes Awareness if the
+    indoctrination ever visibly slips. Education is a foundation, not an off-switch.
 
-### 4.5 False flags & wars — the fear engine
+### 4.5 Repression — the use of force
 
-- **Control:** an Operations panel — stage a **false flag** (moderate cost, instant Fear
-  spike, contained harm) or start a **war** (heavy ongoing cost, large sustained Fear, plus
-  an "emergency powers" window where control is cheaper and taxation bites less).
-- **Effect:** manufactures Perceived Threat (Fear) — the keystone that suppresses Unrest,
-  Awareness, and Prosperity at once.
+- **Control:** direct-force actions — deploy police, send in the military, break up a
+  protest, impose censorship, declare a curfew.
+- **Effect:** cuts Unrest *fast and directly* — the only lever that does. The panic button.
+- **Catches:**
+  - Spikes **Awareness** sharply — visible boots in the street are the moment the mask
+    slips; force is the state at its least deniable.
+  - Costs Treasury and adds Apparatus Upkeep (a standing security apparatus is permanent
+    weight).
+  - It treats the symptom, never the cause — unrest suppressed by force rebuilds, and the
+    Awareness it generates makes the *next* suppression more expensive.
+- Repression is what makes a deliberate **race to totalitarianism** possible: lean on force
+  and the run can be brutal, dramatic, and short — a high *Biggest Haul*, a low *Longest
+  Reign*.
+
+### 4.6 Manufactured threats & war — the fear engine
+
+- **Control:** an Operations panel offering escalating ways to manufacture Fear:
+  - **False-flag incident** — stage a domestic attack or plot. Moderate cost, sharp Fear
+    spike, contained harm — but exposable.
+  - **Foreign fear campaign** — exaggerate the menace of a real foreign power. Cheap,
+    deniable, no real harm; the most sustainable fear tool.
+  - **Provoke an adversary** — needle a real foreign power into genuine hostility. This
+    manufactures a *real* threat, so it cannot be "exposed" as fake — but the danger is
+    then real.
+  - **War** — heavy ongoing cost, large sustained Fear, plus an "emergency powers" window
+    where control is cheaper and taxation bites less.
+- **Effect:** manufactures **Fear** — the keystone that suppresses Unrest, Awareness, and
+  Prosperity at once.
 - **Catches:**
   - The rally fades as Fear decays — a war that drags on inverts into "why are we still
     poor?", causing an Unrest rebound.
-  - False flags can be exposed (chance scales with Awareness and with overuse) →
-    catastrophic Awareness + Unrest spike.
+  - False flags can be exposed (chance scales with Awareness and overuse) → catastrophic
+    Awareness + Unrest spike. Foreign campaigns carry less exposure risk — but provocation
+    and war do *real* harm instead.
   - Wars do real harm — too much, and the people decide the state failed its one job →
     Unrest.
   - Fatigue: repeated scares lose potency; each lands softer than the last.
 
-### 4.6 How the levers interlock
+### 4.7 How the levers interlock
 
-Education monopoly (slow) holds Awareness down → which makes Propaganda cheap and effective
-and false flags safe to run. Fear makes everything cheaper. Money printing buys time but
-raises Awareness, eroding all of the above. The skill of the game is sequencing: invest in
-the slow foundations before they are needed, and never let the fast, cheap fixes outrun
-Awareness.
+Education monopoly (slow) holds Awareness down → which makes Propaganda cheap and
+effective, false flags safe to run, and Repression less self-defeating. Fear makes
+everything cheaper. Repression buys time *now* but raises Awareness, taxing every other
+lever's future; money printing buys time too, and likewise raises Awareness. The skill of
+the game is sequencing: build the slow foundations before they are needed, spend the fast,
+cheap fixes last, and never let Awareness outrun your ability to pay for it.
 
 ---
 
-## 5. Game loop, events, and score  *(LOCKED)*
+## 5. Game loop, events, and score
 
-### 5.1 The loop
+### 5.1 The loop — continuous optimization
 
 Time runs as a monthly calendar — the simulation advances one tick per in-game month,
-twelve months to a year. Speed controls: **Pause · 1× · 2× · 3×** (a tick takes a few real
-seconds at 1×). The player may pause and adjust levers at any time, and major crises
-auto-pause the game — the player is never ambushed mid-decision.
+twelve months to a year. Speed controls: **Pause · 1× · 2× · 3×**.
+
+The game is real-time because the player should **always have something worth doing.**
+The nine districts drift independently every tick; the budget is always tight and always
+shifting; Fear always decays; Awareness always creeps; incidents always surface. There is
+always a worthwhile adjustment available — re-target propaganda to the district waking up,
+top up Fear before a rally fades, shift the budget, decide whether a flare-up is worth the
+Awareness cost of force. The player is never just watching a bar fill.
+
+Three rules keep real-time meaningful rather than stressful:
+
+- **The player may pause and adjust any lever at any time.**
+- **Auto-pause is reserved for genuine crises** — the major choice modals (§5.2), not
+  every minor incident. Small problems do *not* stop the clock, so attention has value: a
+  watchful player catches a district sliding early; an inattentive one pays for it.
+- **Speed is a risk dial.** 3× covers ground fast but a crisis can bloom between glances;
+  1× is safe but slow. Choosing a speed is itself a decision.
 
 Each tick resolves in a fixed order:
 
 1. **Economy** — each district's Wealth grows or shrinks (tax, inflation, education
    monopoly, war).
-2. **Meters** — Happiness, Awareness, and Unrest recompute per district; Fear decays;
+2. **Meters** — Happiness, Awareness, Unrest recompute per district; Fear decays;
    Inflation drifts on its momentum.
-3. **Treasury** — tax collected; Apparatus Upkeep and active lever costs deducted;
-   Lifetime Extraction updated.
-4. **Aggregates** — National Unrest and Prosperity recomputed.
-5. **Events** — the event engine rolls (see §5.2).
-6. **Loss check** — Revolt, The Spell Breaks, or bankruptcy cascade.
-7. **Render** — the map recolors, the HUD updates, the events feed appends.
+3. **Population** — emigration moves people out of miserable, awakened districts (§3.9).
+4. **Treasury** — tax collected; Apparatus Upkeep (including its autonomous growth) and
+   active lever costs deducted; Lifetime Extraction updated.
+5. **Aggregates** — National Unrest and Prosperity recomputed.
+6. **Events** — the event engine rolls (see §5.2).
+7. **Loss check** — Revolt, The Spell Breaks, or bankruptcy cascade.
+8. **Render** — the map recolors, the HUD updates, the events feed appends.
 
 ### 5.2 The events system
 
@@ -288,46 +377,136 @@ Events are both the dynamic pressure and the satirical voice. Four kinds:
   (*"The Bureau of Statistics confirms inflation remains transitory for the ninth
   consecutive year."*). The satire lives here.
 - **Incidents** — things that happen to the player, sometimes with a small mechanical
-  effect, sometimes a quick choice; often consequences of the player's own actions.
+  effect, sometimes a quick choice; often consequences of the player's own actions. These
+  do not pause the game.
 - **Crises** — the major choice modals. The game pauses; a situation appears with 2–4
   options, each with costs and consequences (*"An archivist has leaked documents proving
   the Harbor Attack was staged. [Suppress the story — $$$, may fail] [Discredit the
   leaker — $$] [Let it run — severe Awareness + Unrest]."*). The meaty decisions live here.
 - **Self-Provision events** (§3.8) — the recurring thesis-in-action: a private, voluntary
-  solution emerges; the player bans / taxes / discredits / co-opts / raids / ignores it,
-  each option ugly in its own way.
+  solution emerges; the player bans / taxes / discredits / co-opts / raids / ignores it.
 
 Events are **weighted by game state** — high inflation surfaces inflation events; a
-false-flag-heavy reign surfaces exposure risks; a prosperous country surfaces
-Self-Provision events; a boiling district surfaces riots. The feed always reflects what
-the player is doing. Actions also **plant future events** — staging a false flag seeds a
-possible investigation months later, which can chain into an exposure crisis. v1 ships a
-curated set (~40–60 events).
+fear-heavy reign surfaces exposure risks; a prosperous country surfaces Self-Provision
+events; a boiling district surfaces riots. The feed always reflects what the player is
+doing. Actions also **plant future events** — a false flag seeds a possible investigation
+months later, which can chain into an exposure crisis.
 
-### 5.3 Score and defeat
+**v1 content scope:** a curated set of **~30 events**, weighted toward a strong core of
+8–12 full Crises with the rest cheaper Ambient and Incident lines. Event chaining is a
+small number of hand-scripted chains, not a general engine. The satirical voice is a
+top-tier project risk — 8–10 events should be written and play-tested early to prove the
+tone before the full set is authored.
 
-Every run ends — in **Revolt**, **The Spell Breaks**, or **Bankruptcy**. There is no
-victory screen; the score is the achievement.
+### 5.3 Score, defeat, and the epilogue
 
-Score blends two numbers: **Years Survived** and **Lifetime Extraction**. This
-deliberately rewards two playstyles — the patient operator who balances the squeeze for
-decades, and the smash-and-grab kleptocrat who loots hard and burns out fast.
+Every run ends. There is no victory screen; the score is the achievement, and it is kept
+on **two separate ladders** so the two playstyles each have their own goal:
 
-The **defeat screen** names the cause, delivers a deadpan epitaph for the regime, shows
-the final stats and score, and records the run to a local high-score table — the meta-goal
-that gives an endless game its spine. v1 uses one designed starting scenario; randomized
-event timing keeps each run different.
+- **Longest Reign** — years survived. The patient operator's ladder.
+- **Biggest Haul** — Lifetime Extraction. The smash-and-grab kleptocrat's ladder.
+
+A run records to both. There are three ways it can end:
+
+- **Revolt** (Unrest) and **Bankruptcy** (the §3.6 cascade) each end the run on a deadpan
+  defeat screen — the cause named, an epitaph for the regime, the final stats.
+- **The Spell Breaks** (Prosperity) ends the state differently, and the game says so. The
+  state dissolves, and the simulation **keeps running without it** — no levers, no upkeep,
+  no extraction, no fear. The player watches the freed country's Wealth and Happiness climb
+  on their own. The player cannot act and cannot found a new state; it is over. This
+  epilogue is the game's quiet thesis made literal: left alone, the people simply
+  flourish, and all the player can do is watch the country they can no longer feed on.
+
+v1 uses one designed starting scenario; randomized event timing keeps each run different.
 
 ---
 
-## 6. UI and technical architecture  *(pending — to be designed)*
+## 6. UI and technical architecture
 
-Will cover: screen layout (district map, policy dashboard, HUD, events feed); the
-grounded-dark-satire visual style; tech stack, module structure, and testing approach.
+### 6.1 Screen layout — one main screen, four zones
+
+- **HUD bar (top)** — date (month/year), Treasury (with a live income/expense reading),
+  Inflation, Perceived Threat, and — most prominent — the two loss meters, **Unrest** and
+  **Prosperity**, each with its danger zone marked. Speed controls (Pause · 1× · 2× · 3×)
+  live here.
+- **District map (center-left)** — the 9 districts as clickable regions, color-coded by a
+  selectable overlay: Wealth / Happiness / Awareness / Unrest. Districts recolor live; a
+  district in crisis is flagged. Click one → its detail panel.
+- **Control dashboard (right)** — the six levers, each showing its cost and a one-line
+  effect readout.
+- **Events feed (bottom)** — the scrolling deadpan news log. Crisis events interrupt with
+  a modal and auto-pause.
+
+Two overlays: the **district detail panel** (a district's meters, population, and what is
+driving them — the diagnostic view) and **modals** (crisis choices, the defeat screen).
+
+### 6.2 Legibility and onboarding — the hardest design problem
+
+The game inverts every city-builder instinct the player arrives with, on top of a web of
+interacting meters. If the player cannot feel whether a move helps or hurts, the game is
+noise. Legibility is therefore a first-class design requirement, not UI polish:
+
+- **Show distance and trajectory, not just values.** Each loss meter displays how much
+  headroom remains *and* which way it is heading. The player must always be able to answer
+  "how close am I to losing, and am I getting closer?"
+- **Every lever previews its effect.** Before committing a change, the player sees its
+  projected consequences across the meters — cause and effect must never be a mystery.
+- **Progressive reveal.** A new run surfaces only Treasury and the two loss meters at
+  first; Awareness, Fear, and Inflation appear as the levers that drive them come online.
+- **A teaching first run.** The opening scenario introduces the inversion by example — an
+  early beat lets prosperity rise and frames it as a *threat* — so the player learns the
+  premise by playing it, not by reading it.
+- **Color language built around the inversion**, applied consistently so the player's eye
+  is trained to this game's rules rather than a city-builder's.
+
+### 6.3 Visual style
+
+A real, serious piece of government software — a ministry "situation room." Restrained and
+official; a sober, slightly cold palette; a clean administrative map; institutional
+typography; a dark UI (easy on the eyes for a long session, and it sells the
+operations-console feel). No cartoon, no wackiness — the satire is carried entirely by the
+words. The game *looks* like it takes itself completely seriously. That is the joke.
+
+### 6.4 Technical architecture
+
+**Stack:** Electron (desktop shell) + TypeScript + Vite. The map renders as **SVG** (9
+paths, trivial to click and recolor); HUD, dashboard, feed, and modals are plain DOM. **No
+UI framework** — the dashboard is a fixed set of controls refreshed each tick; vanilla
+TypeScript keeps dependencies minimal. TypeScript because the simulation is a web of
+interacting numbers and types catch real bugs.
+
+**Module boundaries** — units understood and tested independently:
+
+- **`src/sim/`** — the simulation core. Pure TypeScript: no DOM, no Electron. Holds game
+  state; `tick()` advances one month; functions apply each lever. Deterministic (seeded
+  RNG) → fully unit-testable. The heart of the game.
+- **`src/content/`** — data separate from logic: district definitions, the event catalog,
+  lever configs, and every tunable constant (the numbers §8 leaves open).
+- **`src/ui/`** — rendering: map, HUD, dashboard, feed, detail panel, modals. Reads sim
+  state, emits player actions. No simulation logic.
+- **`src/game/`** — orchestration: the real-time loop, sim↔UI wiring, save/load.
+- **`electron/`** — the Electron main process (window, lifecycle).
+
+The crucial line: **the sim core knows nothing about rendering or Electron** — the whole
+simulation runs headless in a test.
+
+**Build the simulation headless first.** Because balance across six interacting levers is
+the single biggest risk to the project, the sim core is built and proven *before* any UI:
+a headless harness runs many automated games to map the strategy space, confirm no
+dominant strategy, and verify the fiscal vise always eventually closes. UI work begins
+only once the core is demonstrably sound.
+
+**Save/load:** the sim state is one serializable object → a single autosave slot on disk,
+with "Continue" on the menu.
+
+**Testing:** the pure sim core is built test-first with unit tests (Vitest) — tax/income
+math, inflation dynamics, bureaucratic growth, meter rules, each lever's effects,
+emigration, loss-condition triggers, event weighting. The UI gets light manual + smoke
+testing.
 
 ---
 
-## 7. Planned expansions  *(designed, out of v1 scope)*
+## 7. Planned expansions  *(designed or noted, out of v1 scope)*
 
 Expansions are fully intended but deliberately excluded from the first playable version,
 so the core game can be built and balanced on a stable base first.
@@ -377,10 +556,21 @@ the player's power.
 
 ### 7.2 Further expansions
 
-Lower-priority, not yet designed in detail:
+Noted, not yet designed in detail (rough priority order):
 
+- **Corruption within the apparatus** — the state's own machinery as a self-interested
+  actor that skims, misreports, and must be managed. The natural next system after
+  Expansion 1.
+- **Surveillance** — an information layer feeding the Overton and Awareness systems.
+- **The ruler and succession** — a named regime, internal legitimacy, succession crises.
+- **Foreign powers as active agents** — rival states that act *on* the player (invasion,
+  sanctions) rather than serving only as war targets.
+- **Regulatory capture** — selling regulation and licensing cartels: extraction that
+  raises Treasury without visible, tax-style Unrest.
+- **The Austrian business cycle** — a genuine credit-expansion → malinvestment → boom →
+  bust model, deeper than v1's inflation-as-erosion.
 - **Multiple historical eras** — additional maps, each a different era with a distinct
-  starting state. More content, no new mechanics.
+  starting state.
 - **Population-cohort modeling** (Approach B) — social classes layered over districts,
   each reacting differently to each lever.
 
@@ -388,7 +578,12 @@ Lower-priority, not yet designed in detail:
 
 ## 8. Iteration notes
 
-- All meter names are provisional.
-- The specification will lock the *model* — what affects what, and in which direction —
-  but deliberately leaves the *numbers* (rates, thresholds, weights) as tunable constants.
-  Balance is found by playtesting.
+- All meter and lever names are provisional.
+- The specification locks the *model* — what affects what, and in which direction — but
+  deliberately leaves the *numbers* (rates, thresholds, weights) as tunable constants in
+  `src/content/`.
+- Balance is found by **headless simulation first** (automated runs across the strategy
+  space) and then by playtesting. The core must be shown to have no dominant strategy and
+  no safe idle equilibrium before UI work begins.
+- This document was revised on 2026-05-22 following a three-agent design audit (MVP
+  completeness, ideological fidelity, and a holistic red-team).
