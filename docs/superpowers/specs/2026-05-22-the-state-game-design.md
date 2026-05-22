@@ -1,6 +1,6 @@
 # The State — Game Design Document
 
-**Status:** In progress — core model and levers locked; game loop/events and UI/tech pending.
+**Status:** In progress — core model, levers, and loop/events/score locked; UI/tech pending. Legislation + Overton window designed as Expansion 1.
 **Date:** 2026-05-22
 **Type:** Design specification
 
@@ -48,8 +48,8 @@ false flags & wars.
 
 **Score:** years survived + Lifetime Extraction (total wealth ever looted).
 
-**Explicitly deferred to later versions:** multiple historical-era maps;
-population-cohort / social-class modeling (Approach B).
+**Planned expansions (out of v1 scope):** Legislation + the Overton window
+(Expansion 1), multiple historical eras, population-cohort modeling — see §7.
 
 ---
 
@@ -258,11 +258,65 @@ Awareness.
 
 ---
 
-## 5. Game loop, events, and score  *(pending — to be designed)*
+## 5. Game loop, events, and score  *(LOCKED)*
 
-Will cover: the real-time tick structure and speed/pause controls; the events system
-(random events, crises, player-choice modals, and the Self-Provision events from §3.8);
-scoring and the defeat screen.
+### 5.1 The loop
+
+Time runs as a monthly calendar — the simulation advances one tick per in-game month,
+twelve months to a year. Speed controls: **Pause · 1× · 2× · 3×** (a tick takes a few real
+seconds at 1×). The player may pause and adjust levers at any time, and major crises
+auto-pause the game — the player is never ambushed mid-decision.
+
+Each tick resolves in a fixed order:
+
+1. **Economy** — each district's Wealth grows or shrinks (tax, inflation, education
+   monopoly, war).
+2. **Meters** — Happiness, Awareness, and Unrest recompute per district; Fear decays;
+   Inflation drifts on its momentum.
+3. **Treasury** — tax collected; Apparatus Upkeep and active lever costs deducted;
+   Lifetime Extraction updated.
+4. **Aggregates** — National Unrest and Prosperity recomputed.
+5. **Events** — the event engine rolls (see §5.2).
+6. **Loss check** — Revolt, The Spell Breaks, or bankruptcy cascade.
+7. **Render** — the map recolors, the HUD updates, the events feed appends.
+
+### 5.2 The events system
+
+Events are both the dynamic pressure and the satirical voice. Four kinds:
+
+- **Ambient news** — deadpan one-liners in the feed, no choice, reacting to game state
+  (*"The Bureau of Statistics confirms inflation remains transitory for the ninth
+  consecutive year."*). The satire lives here.
+- **Incidents** — things that happen to the player, sometimes with a small mechanical
+  effect, sometimes a quick choice; often consequences of the player's own actions.
+- **Crises** — the major choice modals. The game pauses; a situation appears with 2–4
+  options, each with costs and consequences (*"An archivist has leaked documents proving
+  the Harbor Attack was staged. [Suppress the story — $$$, may fail] [Discredit the
+  leaker — $$] [Let it run — severe Awareness + Unrest]."*). The meaty decisions live here.
+- **Self-Provision events** (§3.8) — the recurring thesis-in-action: a private, voluntary
+  solution emerges; the player bans / taxes / discredits / co-opts / raids / ignores it,
+  each option ugly in its own way.
+
+Events are **weighted by game state** — high inflation surfaces inflation events; a
+false-flag-heavy reign surfaces exposure risks; a prosperous country surfaces
+Self-Provision events; a boiling district surfaces riots. The feed always reflects what
+the player is doing. Actions also **plant future events** — staging a false flag seeds a
+possible investigation months later, which can chain into an exposure crisis. v1 ships a
+curated set (~40–60 events).
+
+### 5.3 Score and defeat
+
+Every run ends — in **Revolt**, **The Spell Breaks**, or **Bankruptcy**. There is no
+victory screen; the score is the achievement.
+
+Score blends two numbers: **Years Survived** and **Lifetime Extraction**. This
+deliberately rewards two playstyles — the patient operator who balances the squeeze for
+decades, and the smash-and-grab kleptocrat who loots hard and burns out fast.
+
+The **defeat screen** names the cause, delivers a deadpan epitaph for the regime, shows
+the final stats and score, and records the run to a local high-score table — the meta-goal
+that gives an endless game its spine. v1 uses one designed starting scenario; randomized
+event timing keeps each run different.
 
 ---
 
@@ -273,7 +327,66 @@ grounded-dark-satire visual style; tech stack, module structure, and testing app
 
 ---
 
-## 7. Iteration notes
+## 7. Planned expansions  *(designed, out of v1 scope)*
+
+Expansions are fully intended but deliberately excluded from the first playable version,
+so the core game can be built and balanced on a stable base first.
+
+### 7.1 Expansion 1 — Legislation and the Overton window
+
+**Legislation.** The player enacts **bills** — laws with euphemistic, Orwellian names
+whose stated purpose is a lie about their mechanics. The "Food for Kids Act" raises $1B in
+new taxes and routes 1% to actual child nutrition; the remainder flows to the general
+fund. The satire is the gap between the marketed name and the real effect; the bill modal
+shows the deadpan breakdown plainly — *"Projected revenue: $1.0B. Allocation: 1% child
+nutrition, 99% general fund."* — so the player sees the lie being told.
+
+A bill's euphemistic **name softens public reception** — a well-named bill raises less
+Unrest than its real effect warrants. But the wider the gap between the name and what the
+bill actually does, the higher the **Awareness / exposure risk**: if the public discovers
+the "Food for Kids Act" fed no kids, backlash follows — a sharp Awareness + Unrest spike,
+reusing the existing exposure mechanic.
+
+Bills are **sticky**: once on the books they keep applying their effect, a ratchet like
+the apparatus — easy to pass, costly to undo.
+
+**The Overton window.** Every policy sits on a spectrum from a free society to a total
+state. The **Overton window** is the band of that spectrum currently passable — the range
+of state action the population will presently accept.
+
+- **Fear widens the window toward the statist end.** Frightened people accept, even
+  demand, state expansion; with Fear high enough, UBI (dependency dressed as compassion),
+  surveillance, emergency powers, and conscription all become passable.
+- **Prosperity and Awareness pull the window back toward freedom.** Comfortable,
+  clear-eyed people withhold consent; authoritarian bills become un-passable — visibly
+  locked.
+
+**The timing game.** A crisis flings the window open, but Fear decays, so the window
+drifts shut again. Each crisis is therefore a scramble: while the window is open, what
+does the player ram through before it closes? This makes "never let a crisis go to waste"
+a literal mechanic — the player manufactures fear precisely to manufacture consent.
+
+**Auto-repeal.** Any law left sitting outside the current window erodes on its own —
+institutional and public pressure quietly unwinds it over time. An idle, prospering
+society dismantles the authoritarian apparatus by itself; to keep the state they have
+built, the player must keep manufacturing the conditions that justify it. Repeal cost
+follows the window: tearing down a law still inside the window (still popular) costs
+Unrest; once the window has drifted past a law, repeal is free, or automatic. Prosperity
+thus bites twice — it does not merely threaten the Spell Breaks loss, it actively repeals
+the player's power.
+
+### 7.2 Further expansions
+
+Lower-priority, not yet designed in detail:
+
+- **Multiple historical eras** — additional maps, each a different era with a distinct
+  starting state. More content, no new mechanics.
+- **Population-cohort modeling** (Approach B) — social classes layered over districts,
+  each reacting differently to each lever.
+
+---
+
+## 8. Iteration notes
 
 - All meter names are provisional.
 - The specification will lock the *model* — what affects what, and in which direction —
