@@ -24,4 +24,53 @@ export const CONSTANTS = {
   startingTreasury: 5000,
   initialUpkeep: 450, // monthly apparatus upkeep at the start of a run
   bloatRate: 0.004, // upkeep grows 0.4%/month on its own (design doc §3.6)
+
+  // --- Per-district meters: Happiness ---
+  happinessFromWealth: 1.0, // equilibrium happiness equals wealth, minus inflation drag
+  happinessInflationDrag: 0.8, // happiness equilibrium loses 0.8 per 1 point of inflation
+  happinessCatchUp: 0.2, // fraction of gap toward equilibrium per month
+  happinessFloor: 0,
+  happinessCeiling: 100,
+
+  // --- Per-district meters: Awareness ---
+  awarenessFloor: 0,
+  awarenessCeiling: 100,
+  awarenessFromProsperity: 0.015, // monthly rise per 1 point of (wealth - 50), clamped >=0
+  awarenessFromInflation: 0.05, // monthly rise per 1 point of inflation
+  awarenessEducationSuppression: 0.6, // monthly fall per unit of educationLevel
+  awarenessPropagandaSuppression: 0.0003, // monthly fall per dollar of propagandaBudget
+  awarenessRepressionSpike: 5, // one-shot rise per repression action (per district)
+
+  // --- Per-district meters: Unrest ---
+  unrestFloor: 0,
+  unrestCeiling: 100,
+  unrestMiseryFactor: 0.05, // pressure per month at full misery × full awareness
+  unrestFearSuppression: 0.02, // pressure reduction per 1 point of national fear
+  unrestPropagandaSuppression: 0.0005, // pressure reduction per dollar of propagandaBudget
+  unrestDecay: 0.97, // monthly retention factor (3%/month decay)
+
+  // --- National Fear ---
+  fearFloor: 0,
+  fearCeiling: 100,
+  fearDecay: 0.97, // monthly retention factor (3%/month decay)
+
+  // --- Lever costs and effects ---
+  educationUpkeepPerLevel: 200, // monthly $ cost per unit of educationLevel
+  educationWealthDrag: 0.05, // wealth growth lost per unit of educationLevel
+  repressionCost: 300, // treasury cost per repression action
+  repressionUnrestCut: 25, // unrest cut per repression action, per district
+  fearOpCostPerUnit: 50, // treasury cost per unit of fear injected by spawnFearOp
+
+  // --- Emigration ---
+  emigrationAwarenessThreshold: 40, // contributes only when district awareness > this
+  emigrationHappinessThreshold: 40, // contributes only when district happiness < this
+  emigrationRate: 0.02, // monthly loss fraction at full emigration pressure
+
+  // --- National aggregates ---
+  prosperityWealthWeight: 0.6, // local prosperity = wealth*W + happiness*(1-W)
+  prosperityHappinessWeight: 0.4,
+
+  // --- Loss thresholds ---
+  revoltThreshold: 70, // national unrest at or above this triggers revolt
+  spellBreaksThreshold: 80, // national prosperity at or above this triggers spell-breaks
 } as const;
