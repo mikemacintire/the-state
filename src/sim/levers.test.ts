@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { setTaxRate, printMoney, setPropagandaBudget, setEducationLevel } from './levers';
+import {
+  setTaxRate,
+  printMoney,
+  setPropagandaBudget,
+  setEducationLevel,
+  doRepression,
+} from './levers';
 import { createInitialState } from './state';
+import { CONSTANTS } from '../content/constants';
 
 describe('setTaxRate', () => {
   it('sets a rate that is within range', () => {
@@ -69,5 +76,44 @@ describe('setEducationLevel', () => {
     expect(s.educationLevel).toBe(1);
     setEducationLevel(s, -0.3);
     expect(s.educationLevel).toBe(0);
+  });
+});
+
+describe('doRepression', () => {
+  it('deducts the action cost from the treasury', () => {
+    const s = createInitialState();
+    s.treasury = 5000;
+    doRepression(s);
+    expect(s.treasury).toBe(5000 - CONSTANTS.repressionCost);
+  });
+
+  it('cuts unrest across every district', () => {
+    const s = createInitialState();
+    s.treasury = 5000;
+    for (const d of s.districts) d.unrest = 60;
+    doRepression(s);
+    for (const d of s.districts) {
+      expect(d.unrest).toBeLessThan(60);
+    }
+  });
+
+  it('spikes awareness across every district', () => {
+    const s = createInitialState();
+    s.treasury = 5000;
+    const before = s.districts.map((d) => d.awareness);
+    doRepression(s);
+    for (let i = 0; i < s.districts.length; i++) {
+      expect(s.districts[i].awareness).toBeGreaterThan(before[i]);
+    }
+  });
+
+  it('does nothing when the state cannot afford it', () => {
+    const s = createInitialState();
+    s.treasury = CONSTANTS.repressionCost - 1;
+    const treasuryBefore = s.treasury;
+    const unrestBefore = s.districts[0].unrest;
+    doRepression(s);
+    expect(s.treasury).toBe(treasuryBefore);
+    expect(s.districts[0].unrest).toBe(unrestBefore);
   });
 });
