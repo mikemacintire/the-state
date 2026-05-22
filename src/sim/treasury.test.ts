@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { taxIncome, growBureaucracy, updateTreasury } from './treasury';
 import { createInitialState } from './state';
+import { CONSTANTS } from '../content/constants';
 
 describe('taxIncome', () => {
   it('is zero when the tax rate is zero', () => {
@@ -41,5 +42,25 @@ describe('updateTreasury', () => {
     const before = s.treasury;
     updateTreasury(s);
     expect(s.treasury).toBe(before - 1000);
+  });
+
+  it('deducts the standing propaganda budget from the treasury', () => {
+    const s = createInitialState();
+    s.taxRate = 0;
+    s.apparatusUpkeep = 0;
+    s.propagandaBudget = 800;
+    const before = s.treasury;
+    updateTreasury(s);
+    expect(s.treasury).toBe(before - 800);
+  });
+
+  it('deducts the education monopoly cost from the treasury', () => {
+    const s = createInitialState();
+    s.taxRate = 0;
+    s.apparatusUpkeep = 0;
+    s.educationLevel = 1;
+    const before = s.treasury;
+    updateTreasury(s);
+    expect(s.treasury).toBe(before - CONSTANTS.educationUpkeepPerLevel);
   });
 });

@@ -18,10 +18,17 @@ export function growBureaucracy(state: GameState): void {
   state.apparatusUpkeep *= 1 + CONSTANTS.bloatRate;
 }
 
-/** Collect tax, record the extraction, and pay the month's apparatus upkeep. */
+/**
+ * Collect tax, record the extraction, and pay the month's running costs:
+ * apparatus upkeep, the standing propaganda budget, and the education
+ * monopoly's upkeep. Repression and fear-op costs are one-shot and deducted
+ * at the moment the lever is pulled (in levers.ts), not here.
+ */
 export function updateTreasury(state: GameState): void {
   const income = taxIncome(state);
   state.treasury += income;
   state.lifetimeExtraction += income;
   state.treasury -= state.apparatusUpkeep;
+  state.treasury -= state.propagandaBudget;
+  state.treasury -= state.educationLevel * CONSTANTS.educationUpkeepPerLevel;
 }
