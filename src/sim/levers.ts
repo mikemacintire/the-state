@@ -17,3 +17,8 @@ export function printMoney(state: GameState, amount: number): void {
   state.lifetimeExtraction += amount;
   state.inflationPressure += (amount / 1000) * CONSTANTS.printInflationPerThousand;
 }
+
+/** Lever 3 — Propaganda. Set the standing monthly propaganda budget (>=0). */
+export function setPropagandaBudget(state: GameState, dollars: number): void {
+  state.propagandaBudget = Math.max(0, dollars);
+}

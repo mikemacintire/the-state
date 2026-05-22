@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { setTaxRate, printMoney } from './levers';
+import { setTaxRate, printMoney, setPropagandaBudget } from './levers';
 import { createInitialState } from './state';
 
 describe('setTaxRate', () => {
@@ -39,5 +39,19 @@ describe('printMoney', () => {
     printMoney(s, -100);
     printMoney(s, 0);
     expect(s.treasury).toBe(before);
+  });
+});
+
+describe('setPropagandaBudget', () => {
+  it('sets a non-negative monthly budget', () => {
+    const s = createInitialState();
+    setPropagandaBudget(s, 1500);
+    expect(s.propagandaBudget).toBe(1500);
+  });
+
+  it('clamps negative inputs to zero', () => {
+    const s = createInitialState();
+    setPropagandaBudget(s, -50);
+    expect(s.propagandaBudget).toBe(0);
   });
 });
