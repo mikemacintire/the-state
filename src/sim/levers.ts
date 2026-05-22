@@ -44,3 +44,17 @@ export function doRepression(state: GameState): void {
     );
   }
 }
+
+/**
+ * Lever 6 — Manufactured threats. Inject fear at a per-unit cost — the
+ * keystone tool that suppresses unrest, awareness, and prosperity all at once
+ * (design doc §3.5, §4.6). Plan 3's events differentiate this into false
+ * flags, foreign campaigns, provocations, and wars.
+ */
+export function spawnFearOp(state: GameState, fearAmount: number): void {
+  if (fearAmount <= 0) return;
+  const cost = fearAmount * CONSTANTS.fearOpCostPerUnit;
+  if (state.treasury < cost) return;
+  state.treasury -= cost;
+  state.fear = Math.min(CONSTANTS.fearCeiling, state.fear + fearAmount);
+}

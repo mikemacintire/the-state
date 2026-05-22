@@ -5,6 +5,7 @@ import {
   setPropagandaBudget,
   setEducationLevel,
   doRepression,
+  spawnFearOp,
 } from './levers';
 import { createInitialState } from './state';
 import { CONSTANTS } from '../content/constants';
@@ -115,5 +116,40 @@ describe('doRepression', () => {
     doRepression(s);
     expect(s.treasury).toBe(treasuryBefore);
     expect(s.districts[0].unrest).toBe(unrestBefore);
+  });
+});
+
+describe('spawnFearOp', () => {
+  it('adds fear and deducts the per-unit cost', () => {
+    const s = createInitialState();
+    s.treasury = 5000;
+    spawnFearOp(s, 10);
+    expect(s.fear).toBe(10);
+    expect(s.treasury).toBe(5000 - 10 * CONSTANTS.fearOpCostPerUnit);
+  });
+
+  it('ignores non-positive amounts', () => {
+    const s = createInitialState();
+    s.treasury = 5000;
+    const before = s.treasury;
+    spawnFearOp(s, 0);
+    spawnFearOp(s, -5);
+    expect(s.treasury).toBe(before);
+    expect(s.fear).toBe(0);
+  });
+
+  it('does nothing when the state cannot afford the op', () => {
+    const s = createInitialState();
+    s.treasury = 100;
+    spawnFearOp(s, 100); // would cost 100 * fearOpCostPerUnit, far more than 100
+    expect(s.treasury).toBe(100);
+    expect(s.fear).toBe(0);
+  });
+
+  it('clamps fear to the ceiling', () => {
+    const s = createInitialState();
+    s.treasury = 1_000_000;
+    spawnFearOp(s, 500);
+    expect(s.fear).toBe(CONSTANTS.fearCeiling);
   });
 });
