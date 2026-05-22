@@ -1,6 +1,6 @@
 # The State — Game Design Document
 
-**Status:** In progress — core model (Section 1) locked; Sections 2–4 pending.
+**Status:** In progress — core model and levers locked; game loop/events and UI/tech pending.
 **Date:** 2026-05-22
 **Type:** Design specification
 
@@ -53,7 +53,7 @@ population-cohort / social-class modeling (Approach B).
 
 ---
 
-## 3. Section 1 — The core simulation model  *(LOCKED)*
+## 3. The core simulation model  *(LOCKED)*
 
 ### 3.1 Districts
 
@@ -172,23 +172,108 @@ risking Awareness.
 This dramatizes the game's central thought experiment: the state will oppose even
 something that helps everyone, *because* it threatens the state. Each event's strength
 varies; weak ones are cheap to ignore, strong ones force an ugly, expensive choice.
-(Full events system: Section 3.)
+(Full events system: §5.)
 
 ---
 
-## 4. Pending sections
+## 4. The levers  *(LOCKED)*
 
-- **Section 2 — The levers.** Taxation, money printing, propaganda, education monopoly,
-  false flags & wars: each lever's money cost, concrete effects, and catches.
-- **Section 3 — Game loop, events, and score.** Real-time tick structure and speed
-  controls; the events system (random events, crises, choices, Self-Provision events);
-  scoring and the defeat screen.
-- **Section 4 — UI and technical architecture.** Screen layout (map, dashboard, HUD,
-  events feed); visual style; tech stack, module structure, and testing approach.
+Five levers. The first two raise money; the last three spend it to keep control. Each
+carries a catch — every tool the state owns also bites the hand that holds it. The model
+below is fixed in direction; the numbers (costs, rates, thresholds) are tunable (see §7).
+
+### 4.1 Taxation — the income dial
+
+- **Control:** a tax-rate slider (0–100%), adjustable at any time.
+- **Effect:** each tick, extracts Treasury ≈ rate × the population's taxable wealth; also
+  feeds Lifetime Extraction.
+- **Catches:**
+  - Higher rates suppress Wealth growth — the economy, and so the future tax base, shrinks.
+    Past a point, a wrecked economy yields *less* revenue (the Laffer curve in practice).
+  - Higher felt taxation raises Unrest — sharper when Awareness is high, softer when Fear
+    is high ("for your protection").
+  - Low tax lets Wealth boom, which pushes Prosperity toward The Spell Breaks.
+  - There is no safe setting, only tradeoffs. This dial is the engine of the fiscal vise.
+
+### 4.2 Money printing — the emergency tap
+
+- **Control:** a "print" action — choose an amount; Treasury rises instantly.
+- **Effect:** immediate cash.
+- **Catches:**
+  - Raises Inflation, which has momentum — it keeps climbing after printing and is slow to
+    bring down (a delayed, boom-bust crisis).
+  - Inflation erodes Wealth and Happiness across all districts.
+  - Inflation raises Awareness — people notice their money vanishing.
+  - Inflation devalues the Treasury itself and future tax revenue, forcing still more
+    printing: the inflationary spiral.
+  - Perverse upside: by keeping people poorer, inflation eases the Prosperity side — a
+    deliberately tempting trap.
+
+### 4.3 Propaganda — the rented lid
+
+- **Control:** a spending slider (Treasury per tick).
+- **Effect:** directly suppresses Unrest and slows Awareness growth; more spend = more
+  suppression, with diminishing returns.
+- **Catches:**
+  - A continuous drain — stop paying and Unrest snaps back. It is a lid rented, never owned.
+  - Effectiveness decays as Awareness rises (people see through it) and as Prosperity rises
+    (comfortable people tune it out).
+  - It works cheaply and powerfully only on an ignorant, struggling population.
+
+### 4.4 Education monopoly — the long game
+
+- **Control:** a level the player invests to raise (free/private schooling → total state
+  monopoly).
+- **Effect:** slows, and eventually reverses, Awareness growth — structural, generational
+  control of the population's mind.
+- **Catches:**
+  - Costly to build, and adds permanent Apparatus Upkeep (part of the fiscal ratchet).
+  - Slow-acting — it shapes the next generation, not today's crisis.
+  - An indoctrinated, incurious population is less productive, so a high monopoly suppresses
+    Wealth growth — trading a smaller tax base for a more docile one.
+
+### 4.5 False flags & wars — the fear engine
+
+- **Control:** an Operations panel — stage a **false flag** (moderate cost, instant Fear
+  spike, contained harm) or start a **war** (heavy ongoing cost, large sustained Fear, plus
+  an "emergency powers" window where control is cheaper and taxation bites less).
+- **Effect:** manufactures Perceived Threat (Fear) — the keystone that suppresses Unrest,
+  Awareness, and Prosperity at once.
+- **Catches:**
+  - The rally fades as Fear decays — a war that drags on inverts into "why are we still
+    poor?", causing an Unrest rebound.
+  - False flags can be exposed (chance scales with Awareness and with overuse) →
+    catastrophic Awareness + Unrest spike.
+  - Wars do real harm — too much, and the people decide the state failed its one job →
+    Unrest.
+  - Fatigue: repeated scares lose potency; each lands softer than the last.
+
+### 4.6 How the levers interlock
+
+Education monopoly (slow) holds Awareness down → which makes Propaganda cheap and effective
+and false flags safe to run. Fear makes everything cheaper. Money printing buys time but
+raises Awareness, eroding all of the above. The skill of the game is sequencing: invest in
+the slow foundations before they are needed, and never let the fast, cheap fixes outrun
+Awareness.
 
 ---
 
-## 5. Iteration notes
+## 5. Game loop, events, and score  *(pending — to be designed)*
+
+Will cover: the real-time tick structure and speed/pause controls; the events system
+(random events, crises, player-choice modals, and the Self-Provision events from §3.8);
+scoring and the defeat screen.
+
+---
+
+## 6. UI and technical architecture  *(pending — to be designed)*
+
+Will cover: screen layout (district map, policy dashboard, HUD, events feed); the
+grounded-dark-satire visual style; tech stack, module structure, and testing approach.
+
+---
+
+## 7. Iteration notes
 
 - All meter names are provisional.
 - The specification will lock the *model* — what affects what, and in which direction —
