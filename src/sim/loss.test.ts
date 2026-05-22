@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { checkLoss } from './loss';
 import { createInitialState } from './state';
+import { CONSTANTS } from '../content/constants';
 
 describe('checkLoss', () => {
   it('leaves a solvent state running', () => {
@@ -30,5 +31,35 @@ describe('checkLoss', () => {
     s.treasury = 9999;
     checkLoss(s);
     expect(s.lossCause).toBe('bankruptcy');
+  });
+
+  it('ends the run in revolt when national unrest crosses the threshold', () => {
+    const s = createInitialState();
+    s.nationalUnrest = CONSTANTS.revoltThreshold;
+    checkLoss(s);
+    expect(s.lossCause).toBe('revolt');
+  });
+
+  it('ends the run in spell-breaks when national prosperity crosses the threshold', () => {
+    const s = createInitialState();
+    s.nationalProsperity = CONSTANTS.spellBreaksThreshold;
+    checkLoss(s);
+    expect(s.lossCause).toBe('spell-breaks');
+  });
+
+  it('prefers bankruptcy over revolt when both could fire', () => {
+    const s = createInitialState();
+    s.treasury = 0;
+    s.nationalUnrest = CONSTANTS.revoltThreshold + 10;
+    checkLoss(s);
+    expect(s.lossCause).toBe('bankruptcy');
+  });
+
+  it('prefers revolt over spell-breaks when both could fire', () => {
+    const s = createInitialState();
+    s.nationalUnrest = CONSTANTS.revoltThreshold;
+    s.nationalProsperity = CONSTANTS.spellBreaksThreshold;
+    checkLoss(s);
+    expect(s.lossCause).toBe('revolt');
   });
 });
