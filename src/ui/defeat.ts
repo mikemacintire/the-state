@@ -13,25 +13,33 @@ const EPITAPHS: Record<LossCause, string> = {
   'spell-breaks': 'The people stopped needing the state. They are quietly carrying on without it.',
 };
 
-export function renderDefeat(state: GameState, el: HTMLElement): void {
+/**
+ * Render the end-of-run screen. Bankruptcy and revolt freeze with a full
+ * `.defeat-overlay` backdrop and a centred `.defeat-modal` panel. Spell-
+ * Breaks renders the translucent `.epilogue-banner` so the freed country
+ * keeps animating underneath. When `onRestart` is provided, both surfaces
+ * include a Start over button that calls it.
+ */
+export function renderDefeat(
+  state: GameState,
+  el: HTMLElement,
+  onRestart?: () => void,
+): void {
   el.innerHTML = '';
   if (!state.lossCause) return;
-  // The spell-breaks epilogue is non-blocking: a translucent banner so the
-  // player can watch the map and HUD continue to update as the freed country
-  // flourishes. Bankruptcy and revolt freeze with a full modal.
   if (state.lossCause === 'spell-breaks') {
-    renderEpilogue(state, el);
+    renderEpilogue(state, el, onRestart);
     return;
   }
-  renderDefeatModal(state, el);
+  renderDefeatModal(state, el, onRestart);
 }
 
-function renderDefeatModal(state: GameState, el: HTMLElement): void {
+function renderDefeatModal(state: GameState, el: HTMLElement, onRestart?: () => void): void {
   const cause = state.lossCause as LossCause;
   const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
+  overlay.className = 'defeat-overlay';
   const modal = document.createElement('div');
-  modal.className = 'modal';
+  modal.className = 'defeat-modal';
   const title = document.createElement('h2');
   title.textContent = TITLES[cause];
   const epitaph = document.createElement('p');
@@ -42,11 +50,12 @@ function renderDefeatModal(state: GameState, el: HTMLElement): void {
   modal.appendChild(title);
   modal.appendChild(epitaph);
   modal.appendChild(stats);
+  if (onRestart) modal.appendChild(makeRestartButton(onRestart));
   overlay.appendChild(modal);
   el.appendChild(overlay);
 }
 
-function renderEpilogue(state: GameState, el: HTMLElement): void {
+function renderEpilogue(state: GameState, el: HTMLElement, onRestart?: () => void): void {
   const banner = document.createElement('div');
   banner.className = 'epilogue-banner';
   const title = document.createElement('h2');
@@ -63,5 +72,14 @@ function renderEpilogue(state: GameState, el: HTMLElement): void {
   banner.appendChild(epitaph);
   banner.appendChild(stats);
   banner.appendChild(watch);
+  if (onRestart) banner.appendChild(makeRestartButton(onRestart));
   el.appendChild(banner);
+}
+
+function makeRestartButton(onRestart: () => void): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.className = 'defeat-restart';
+  btn.textContent = 'Start over';
+  btn.addEventListener('click', onRestart);
+  return btn;
 }

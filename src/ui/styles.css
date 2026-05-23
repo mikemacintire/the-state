@@ -411,6 +411,60 @@ body {
   pointer-events: none;
 }
 
+/* End-of-run defeat panel. Full-screen for revolt/bankruptcy; the
+ * epilogue banner sits underneath but does its own translucent thing. */
+.defeat-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+}
+
+.defeat-modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--accent);
+  padding: 28px 32px;
+  max-width: 560px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+}
+
+.defeat-modal h2 {
+  margin: 0 0 14px;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  font-size: 22px;
+}
+
+.defeat-modal p {
+  margin: 8px 0;
+  color: var(--fg);
+  line-height: 1.45;
+}
+
+.defeat-restart {
+  margin-top: 18px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 10px 22px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.defeat-restart:hover {
+  background: var(--fg);
+}
+
+.epilogue-banner .defeat-restart {
+  margin-top: 10px;
+}
+
 /* Floating crisis panel — lives inside the map SVG as a foreignObject,
  * positioned at the originating district's centroid. No backdrop: the
  * player can still examine the rest of the country while deciding. */

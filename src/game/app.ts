@@ -119,7 +119,10 @@ function bootstrap(): void {
         render();
       });
     }
-    renderDefeat(state, defeatEl);
+    renderDefeat(state, defeatEl, () => {
+      clearSave();
+      location.reload();
+    });
     if (state.lossCause) {
       // Final autosave on game over, then keep the save so the player can
       // see the defeat screen next session if they restart.
