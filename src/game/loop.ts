@@ -2,7 +2,7 @@ import type { GameState } from '../sim/types';
 import { tick } from '../sim/tick';
 
 /** Base period in ms for 1× speed (one month per BASE_PERIOD_MS of wall clock). */
-const BASE_PERIOD_MS = 800;
+const BASE_PERIOD_MS = 1800;
 
 export type Speed = 0 | 1 | 2 | 3;
 

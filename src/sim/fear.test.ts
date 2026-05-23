@@ -18,7 +18,7 @@ describe('updateFear', () => {
     expect(s.fear).toBeGreaterThanOrEqual(0);
   });
 
-  it('leaves a maxed-out fear high after one tick (slow decay)', () => {
+  it('leaves a maxed-out fear high after one tick (decay is gradual, not instant)', () => {
     const s = createInitialState();
     s.fear = 100;
     updateFear(s);

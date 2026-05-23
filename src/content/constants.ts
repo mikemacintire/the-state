@@ -17,13 +17,13 @@ export const CONSTANTS = {
 
   // --- Money printing & inflation ---
   printInflationPerThousand: 0.6, // inflation pressure added per 1000 printed
-  inflationCatchUp: 0.25, // fraction of the gap inflation closes toward pressure each month
-  inflationPressureDecay: 0.82, // fraction of pressure retained each month
+  inflationCatchUp: 0.12, // fraction of the gap inflation closes toward pressure each month — lower = longer-delayed pain
+  inflationPressureDecay: 0.92, // fraction of pressure retained each month — higher = pressure lingers, spreading the spiral
 
   // --- Treasury & the bureaucracy ---
   startingTreasury: 5000,
   initialUpkeep: 450, // monthly apparatus upkeep at the start of a run
-  bloatRate: 0.004, // upkeep grows 0.4%/month on its own (design doc §3.6)
+  bloatRate: 0.008, // upkeep grows 0.8%/month on its own — doubles in ~7 yrs (design doc §3.6)
 
   // --- Per-district meters: Happiness ---
   happinessFromWealth: 1.0, // equilibrium happiness equals wealth, minus inflation drag
@@ -39,12 +39,12 @@ export const CONSTANTS = {
   awarenessFromInflation: 0.05, // monthly rise per 1 point of inflation
   awarenessEducationSuppression: 0.6, // monthly fall per unit of educationLevel
   awarenessPropagandaSuppression: 0.0003, // monthly fall per dollar of propagandaBudget
-  awarenessRepressionSpike: 5, // one-shot rise per repression action (per district)
+  awarenessRepressionSpike: 15, // one-shot rise per repression action (per district) — base; escalation multiplier in levers.ts
 
   // --- Per-district meters: Unrest ---
   unrestFloor: 0,
   unrestCeiling: 100,
-  unrestMiseryFactor: 0.05, // pressure per month at full misery × full awareness
+  unrestMiseryFactor: 0.025, // pressure per month at full misery × full awareness — halved so unrest takes a season to boil, not a few weeks
   unrestFearSuppression: 0.02, // pressure reduction per 1 point of national fear
   unrestPropagandaSuppression: 0.0005, // pressure reduction per dollar of propagandaBudget
   unrestDecay: 0.97, // monthly retention factor (3%/month decay)
@@ -52,19 +52,19 @@ export const CONSTANTS = {
   // --- National Fear ---
   fearFloor: 0,
   fearCeiling: 100,
-  fearDecay: 0.97, // monthly retention factor (3%/month decay)
+  fearDecay: 0.92, // monthly retention factor (8%/month decay) — fear must be re-manufactured per §3.5
 
   // --- Lever costs and effects ---
   educationUpkeepPerLevel: 200, // monthly $ cost per unit of educationLevel
   educationWealthDrag: 0.05, // wealth growth lost per unit of educationLevel
-  repressionCost: 300, // treasury cost per repression action
-  repressionUnrestCut: 25, // unrest cut per repression action, per district
+  repressionCost: 500, // treasury cost per repression action
+  repressionUnrestCut: 8, // unrest cut per repression action, per district — small; spam-then-spike-awareness is the design
   fearOpCostPerUnit: 50, // treasury cost per unit of fear injected by spawnFearOp
 
   // --- Emigration ---
   emigrationAwarenessThreshold: 40, // contributes only when district awareness > this
   emigrationHappinessThreshold: 40, // contributes only when district happiness < this
-  emigrationRate: 0.02, // monthly loss fraction at full emigration pressure
+  emigrationRate: 0.06, // monthly loss fraction at full emigration pressure — the §3.9 sweet-spot punishment
 
   // --- National aggregates ---
   prosperityWealthWeight: 0.6, // local prosperity = wealth*W + happiness*(1-W)
