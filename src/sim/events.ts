@@ -72,3 +72,38 @@ export function fireEvent(
     ...(chosenOption !== undefined ? { chosenOption } : {}),
   });
 }
+
+/**
+ * One tick of the event system (design doc §5.1 step 6):
+ *
+ * 1. Fire any pending events whose `fireMonth <= state.month`, in arrival order,
+ *    looking them up in the supplied catalog by id. Pending events whose target
+ *    event is not in the catalog are silently dropped.
+ * 2. Pick one event from the catalog via `pickEvent` and fire it (if eligible).
+ *
+ * Both steps share the catalog lookup. The RNG advances exactly once per call
+ * (in step 2) regardless of how many pending events fired in step 1.
+ */
+export function processEvents(
+  state: GameState,
+  catalog: readonly Event[],
+  onCrisis?: (state: GameState, event: Event) => number,
+): void {
+  // 1. Pending events
+  const remaining: typeof state.pendingEvents = [];
+  const due = state.pendingEvents;
+  state.pendingEvents = remaining; // swap so fireEvent's own schedule() pushes land cleanly
+  for (const p of due) {
+    if (p.fireMonth <= state.month) {
+      const ev = catalog.find((e) => e.id === p.eventId);
+      if (ev) fireEvent(state, ev, onCrisis);
+    } else {
+      remaining.push(p);
+    }
+  }
+
+  // 2. Picked event from the catalog
+  const { event, rngState } = pickEvent(state, catalog);
+  state.rng = rngState;
+  if (event) fireEvent(state, event, onCrisis);
+}

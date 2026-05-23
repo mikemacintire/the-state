@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickEvent, fireEvent } from './events';
+import { pickEvent, fireEvent, processEvents } from './events';
 import { createInitialState } from './state';
 import type { Event } from './types';
 
@@ -157,5 +157,101 @@ describe('fireEvent', () => {
     fireEvent(s, event, () => 99);
     expect(s.fear).toBe(1);
     expect(s.eventLog[0].chosenOption).toBe('B');
+  });
+});
+
+describe('processEvents', () => {
+  it('fires every pending event whose fireMonth matches the current month', () => {
+    const s = createInitialState();
+    s.month = 5;
+    const catalog: Event[] = [
+      {
+        id: 'investigation',
+        kind: 'incident',
+        text: 'A magazine prints awkward questions.',
+        weight: () => 0,
+        effects: (st) => { st.fear -= 3; },
+      },
+    ];
+    s.pendingEvents.push({ eventId: 'investigation', fireMonth: 5 });
+    s.fear = 50;
+    processEvents(s, catalog);
+    expect(s.fear).toBe(47);
+    expect(s.pendingEvents).toEqual([]);
+    expect(s.eventLog.some((e) => e.eventId === 'investigation')).toBe(true);
+  });
+
+  it('leaves pending events whose fireMonth is in the future', () => {
+    const s = createInitialState();
+    s.month = 5;
+    const catalog: Event[] = [];
+    s.pendingEvents.push({ eventId: 'later', fireMonth: 12 });
+    processEvents(s, catalog);
+    expect(s.pendingEvents).toEqual([{ eventId: 'later', fireMonth: 12 }]);
+  });
+
+  it('also fires any pending events whose fireMonth has already passed (catch-up)', () => {
+    const s = createInitialState();
+    s.month = 9;
+    const catalog: Event[] = [
+      { id: 'late', kind: 'ambient', text: 'late', weight: () => 0, effects: (st) => { st.fear = 1; } },
+    ];
+    s.pendingEvents.push({ eventId: 'late', fireMonth: 3 });
+    processEvents(s, catalog);
+    expect(s.fear).toBe(1);
+    expect(s.pendingEvents).toEqual([]);
+  });
+
+  it('picks one eligible catalog event each tick when the catalog is non-empty', () => {
+    const s = createInitialState();
+    s.rng = 12345;
+    const catalog: Event[] = [
+      { id: 'parade', kind: 'ambient', text: 'parade', weight: () => 1, effects: () => {} },
+    ];
+    processEvents(s, catalog);
+    // exactly one entry from the catalog (no pending events were scheduled)
+    expect(s.eventLog).toHaveLength(1);
+    expect(s.eventLog[0].eventId).toBe('parade');
+  });
+
+  it('advances the RNG state when picking from the catalog', () => {
+    const s = createInitialState();
+    s.rng = 7;
+    const catalog: Event[] = [
+      { id: 'a', kind: 'ambient', text: 'a', weight: () => 1, effects: () => {} },
+    ];
+    processEvents(s, catalog);
+    expect(s.rng).not.toBe(7);
+  });
+
+  it('still advances the RNG state when no eligible event exists', () => {
+    const s = createInitialState();
+    s.rng = 7;
+    const catalog: Event[] = [
+      { id: 'a', kind: 'ambient', text: 'a', weight: () => 0, effects: () => {} },
+    ];
+    processEvents(s, catalog);
+    expect(s.rng).not.toBe(7);
+    expect(s.eventLog).toEqual([]);
+  });
+
+  it('passes the onCrisis handler through to fireEvent', () => {
+    const s = createInitialState();
+    s.month = 4;
+    const catalog: Event[] = [
+      {
+        id: 'choose',
+        kind: 'crisis',
+        text: 'pick one',
+        weight: () => 1,
+        effects: () => {},
+        choices: [
+          { label: 'A', effects: (st) => { st.fear = 1; } },
+          { label: 'B', effects: (st) => { st.fear = 9; } },
+        ],
+      },
+    ];
+    processEvents(s, catalog, () => 1);
+    expect(s.fear).toBe(9);
   });
 });
