@@ -37,16 +37,19 @@ export const CONSTANTS = {
   awarenessCeiling: 100,
   awarenessFromProsperity: 0.015, // monthly rise per 1 point of (wealth - 50), clamped >=0
   awarenessFromInflation: 0.05, // monthly rise per 1 point of inflation
-  awarenessEducationSuppression: 0.6, // monthly fall per unit of educationLevel
-  awarenessPropagandaSuppression: 0.0003, // monthly fall per dollar of propagandaBudget
+  awarenessEducationSuppression: 1.5, // scales `level × (1 - level × 0.8)` — Laffer-shaped, peaks around level 0.6 (design doc §4.4)
+  educationBrittleness: 0.4, // adds `level² × this` to awareness pressure — a docile population is brittle (§4.4)
+  awarenessPropagandaSuppression: 0.04, // scales `sqrt(budget) × effectiveness` — diminishing returns (§4.3)
   awarenessRepressionSpike: 15, // one-shot rise per repression action (per district) — base; escalation multiplier in levers.ts
 
   // --- Per-district meters: Unrest ---
   unrestFloor: 0,
   unrestCeiling: 100,
   unrestMiseryFactor: 0.025, // pressure per month at full misery × full awareness — halved so unrest takes a season to boil, not a few weeks
+  unrestTaxFactor: 1.5, // pressure per month at full tax × full awareness — the §4.1 "higher felt taxation raises unrest"
+  unrestFearLicensing: 0.7, // at full fear, tax-felt pressure is reduced by 70% — fear "licenses extraction" per §3.5
   unrestFearSuppression: 0.02, // pressure reduction per 1 point of national fear
-  unrestPropagandaSuppression: 0.0005, // pressure reduction per dollar of propagandaBudget
+  unrestPropagandaSuppression: 0.04, // scales `sqrt(budget) × effectiveness` — same diminishing-returns shape as awareness (§4.3)
   unrestDecay: 0.97, // monthly retention factor (3%/month decay)
 
   // --- National Fear ---

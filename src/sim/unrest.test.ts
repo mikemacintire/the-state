@@ -3,28 +3,46 @@ import { unrestPressure, updateUnrest } from './unrest';
 import { createInitialState } from './state';
 
 describe('unrestPressure', () => {
-  it('is zero when people are happy', () => {
-    expect(unrestPressure(100, 80, 0, 0)).toBe(0);
+  // Signature: (happiness, awareness, fear, propagandaBudget, taxRate, nationalProsperity)
+  it('is zero when people are happy and not taxed', () => {
+    expect(unrestPressure(100, 80, 0, 0, 0, 0)).toBe(0);
   });
 
-  it('is zero when people are unaware, even if miserable', () => {
-    expect(unrestPressure(0, 0, 0, 0)).toBe(0);
+  it('is zero when people are unaware, even if miserable and heavily taxed', () => {
+    // No awareness → tax & misery both gated to zero.
+    expect(unrestPressure(0, 0, 0, 0, 1.0, 0)).toBe(0);
   });
 
   it('rises when both misery and awareness are high', () => {
-    expect(unrestPressure(20, 80, 0, 0)).toBeGreaterThan(0);
+    expect(unrestPressure(20, 80, 0, 0, 0, 0)).toBeGreaterThan(0);
   });
 
   it('is reduced by fear', () => {
-    expect(unrestPressure(20, 80, 50, 0)).toBeLessThan(unrestPressure(20, 80, 0, 0));
+    expect(unrestPressure(20, 80, 50, 0, 0, 0)).toBeLessThan(
+      unrestPressure(20, 80, 0, 0, 0, 0),
+    );
   });
 
   it('is reduced by propaganda', () => {
-    expect(unrestPressure(20, 80, 0, 5000)).toBeLessThan(unrestPressure(20, 80, 0, 0));
+    expect(unrestPressure(20, 80, 0, 5000, 0, 0)).toBeLessThan(
+      unrestPressure(20, 80, 0, 0, 0, 0),
+    );
+  });
+
+  it('rises with the tax rate (sharper when awareness is high)', () => {
+    const untaxed = unrestPressure(80, 80, 0, 0, 0, 0);
+    const taxed = unrestPressure(80, 80, 0, 0, 0.5, 0);
+    expect(taxed).toBeGreaterThan(untaxed);
+  });
+
+  it('fear softens the tax bite (§4.1 "for your protection")', () => {
+    const calm = unrestPressure(80, 80, 0, 0, 0.5, 0);
+    const afraid = unrestPressure(80, 80, 80, 0, 0.5, 0);
+    expect(afraid).toBeLessThan(calm);
   });
 
   it('never goes negative under overwhelming suppression', () => {
-    expect(unrestPressure(50, 100, 100, 100_000)).toBeGreaterThanOrEqual(0);
+    expect(unrestPressure(50, 100, 100, 100_000, 0, 0)).toBeGreaterThanOrEqual(0);
   });
 });
 
