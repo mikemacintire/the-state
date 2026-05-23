@@ -74,6 +74,17 @@ body {
   color: var(--fg-dim);
 }
 
+.hud-stat-group {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.hud-stat-group + .hud-stat-group {
+  padding-left: 24px;
+  border-left: 1px solid var(--border);
+}
+
 .hud-stat {
   display: flex;
   flex-direction: column;
@@ -98,6 +109,76 @@ body {
 
 .hud-stat .value.warn {
   color: var(--warn);
+}
+
+.hud-stat .subline {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--fg-dim);
+  margin-top: 1px;
+}
+
+/* Loss meters get visual prominence — design doc §6.1 calls them
+ * "most prominent." Larger value, dedicated delta line. */
+.hud-loss-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 100px;
+}
+
+.hud-loss-meter .label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fg-dim);
+}
+
+.hud-loss-meter .value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.hud-loss-meter .value.warn {
+  color: var(--warn);
+}
+
+.hud-loss-meter .value.danger {
+  color: var(--danger);
+}
+
+/* Prosperity is structurally a DIFFERENT loss vector from Unrest. Same
+ * "approaching threshold" alarm, but a cool palette so the player learns
+ * they're separate failures. A city-builder veteran's instinct is that
+ * "wealth = good" — the icy color trains them out of that here. */
+.hud-loss-meter.prosperity .value.warn {
+  color: #b9d4ea;
+}
+.hud-loss-meter.prosperity .value.danger {
+  color: #e1ecf6;
+  text-shadow: 0 0 10px rgba(150, 200, 240, 0.45);
+}
+
+.hud-loss-meter .delta {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+/* Direction colors. Loss meters: rising = bad. Treasury: rising = good. */
+.delta-up-bad,
+.delta-down-bad {
+  color: var(--danger);
+}
+
+.delta-up-good,
+.delta-down-good {
+  color: var(--good);
+}
+
+.delta-flat {
+  color: var(--fg-dim);
 }
 
 .speed-controls {

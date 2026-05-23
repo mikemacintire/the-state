@@ -28,3 +28,32 @@ export function meterClass(value: number, threshold: number): string {
   if (r >= 0.6) return 'warn';
   return '';
 }
+
+/**
+ * Arrow glyph for a per-month delta. Threshold is 0.05 to keep tiny drift
+ * showing as flat instead of jittering ↑/↓ on noise.
+ */
+export function deltaArrow(delta: number): '↑' | '↓' | '→' {
+  if (delta > 0.05) return '↑';
+  if (delta < -0.05) return '↓';
+  return '→';
+}
+
+/**
+ * Human-readable per-month delta for a meter, e.g. `+0.6/mo`, `-1.2/mo`, `0.0/mo`.
+ */
+export function formatMeterDelta(delta: number): string {
+  if (Math.abs(delta) < 0.05) return '0.0/mo';
+  const sign = delta > 0 ? '+' : '';
+  return `${sign}${delta.toFixed(1)}/mo`;
+}
+
+/**
+ * Human-readable per-month treasury delta, e.g. `+$420/mo`, `-$180/mo`.
+ * Uses the `formatMoney` sign convention so negative deltas render as `-$180`.
+ */
+export function formatMoneyDelta(delta: number): string {
+  if (Math.abs(delta) < 0.5) return '$0/mo';
+  const sign = delta > 0 ? '+' : '';
+  return `${sign}${formatMoney(delta)}/mo`;
+}
