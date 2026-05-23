@@ -447,16 +447,6 @@ body {
   margin: 2px 0;
 }
 
-.district {
-  fill: var(--bg-elev);
-  stroke: var(--border);
-  cursor: pointer;
-}
-
-.district:hover {
-  stroke: var(--accent);
-}
-
 /* Spell-Breaks epilogue — a translucent banner that does NOT block the map.
  * The player can watch the freed country flourish underneath. */
 .epilogue-banner {
