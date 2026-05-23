@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickEvent } from './events';
+import { pickEvent, fireEvent } from './events';
 import { createInitialState } from './state';
 import type { Event } from './types';
 
@@ -63,5 +63,99 @@ describe('pickEvent', () => {
       rng = r.rngState;
     }
     expect(commonCount).toBeGreaterThan(150); // ~99% of 200
+  });
+});
+
+describe('fireEvent', () => {
+  it('applies the base effects and appends an event-log entry', () => {
+    const s = createInitialState();
+    const event: Event = {
+      id: 'tax-hike',
+      kind: 'incident',
+      text: 'Quietly raises the wartime surcharge.',
+      weight: () => 1,
+      effects: (st) => {
+        st.treasury += 500;
+      },
+    };
+    s.month = 7;
+    const before = s.treasury;
+    fireEvent(s, event);
+    expect(s.treasury).toBe(before + 500);
+    expect(s.eventLog).toHaveLength(1);
+    expect(s.eventLog[0]).toEqual({ month: 7, eventId: 'tax-hike', text: event.text });
+  });
+
+  it('resolves a crisis by calling onCrisis and applying the chosen option', () => {
+    const s = createInitialState();
+    s.treasury = 1000;
+    const event: Event = {
+      id: 'leak',
+      kind: 'crisis',
+      text: 'An archivist leaks documents.',
+      weight: () => 1,
+      effects: () => {}, // no base effects
+      choices: [
+        { label: 'Suppress', effects: (st) => { st.treasury -= 200; } },
+        { label: 'Let it run', effects: (st) => { st.fear += 5; } },
+      ],
+    };
+    const onCrisis = () => 1; // pick "Let it run"
+    fireEvent(s, event, onCrisis);
+    expect(s.treasury).toBe(1000); // 'Suppress' was not chosen
+    expect(s.fear).toBe(5);
+    expect(s.eventLog[0].chosenOption).toBe('Let it run');
+  });
+
+  it('defaults to choice 0 when no onCrisis handler is provided', () => {
+    const s = createInitialState();
+    s.treasury = 1000;
+    const event: Event = {
+      id: 'leak',
+      kind: 'crisis',
+      text: 'An archivist leaks documents.',
+      weight: () => 1,
+      effects: () => {},
+      choices: [
+        { label: 'Suppress', effects: (st) => { st.treasury -= 200; } },
+        { label: 'Let it run', effects: (st) => { st.fear += 5; } },
+      ],
+    };
+    fireEvent(s, event); // no onCrisis
+    expect(s.treasury).toBe(800); // 'Suppress' was chosen
+    expect(s.eventLog[0].chosenOption).toBe('Suppress');
+  });
+
+  it('queues scheduled follow-up events into pendingEvents', () => {
+    const s = createInitialState();
+    s.month = 3;
+    const event: Event = {
+      id: 'false-flag',
+      kind: 'incident',
+      text: 'Foreign-orchestrated incident in the Port.',
+      weight: () => 1,
+      effects: () => {},
+      schedule: (st) => [{ eventId: 'investigation', fireMonth: st.month + 6 }],
+    };
+    fireEvent(s, event);
+    expect(s.pendingEvents).toEqual([{ eventId: 'investigation', fireMonth: 9 }]);
+  });
+
+  it('clamps a too-large choice index to the last option', () => {
+    const s = createInitialState();
+    const event: Event = {
+      id: 'leak',
+      kind: 'crisis',
+      text: '...',
+      weight: () => 1,
+      effects: () => {},
+      choices: [
+        { label: 'A', effects: () => {} },
+        { label: 'B', effects: (st) => { st.fear += 1; } },
+      ],
+    };
+    fireEvent(s, event, () => 99);
+    expect(s.fear).toBe(1);
+    expect(s.eventLog[0].chosenOption).toBe('B');
   });
 });
