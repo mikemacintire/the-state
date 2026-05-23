@@ -15,7 +15,6 @@ import { renderHud, type HudDeltas } from '../ui/hud';
 import { renderMap, type Overlay } from '../ui/map';
 import { renderDistrictDetail } from '../ui/district-detail';
 import { renderDashboard } from '../ui/dashboard';
-import { renderFeed } from '../ui/feed';
 import { renderModal } from '../ui/modal';
 import { renderDefeat } from '../ui/defeat';
 
@@ -24,7 +23,6 @@ function bootstrap(): void {
   const mapEl = document.getElementById('map')!;
   const detailEl = document.getElementById('district-detail-root')!;
   const dashboardEl = document.getElementById('dashboard')!;
-  const feedEl = document.getElementById('feed')!;
   const modalEl = document.getElementById('modal-root')!;
   const defeatEl = document.getElementById('defeat-root')!;
 
@@ -110,7 +108,6 @@ function bootstrap(): void {
         onFearOp: (n) => { spawnFearOp(state, n); render(); },
       });
     }
-    renderFeed(state, feedEl);
     renderModal(state, modalEl, (idx) => {
       resolveCrisis(state, idx);
       render();
