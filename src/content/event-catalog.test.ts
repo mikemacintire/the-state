@@ -34,4 +34,62 @@ describe('EVENT_CATALOG', () => {
       }
     }
   });
+
+  describe('event anchoring (spatial surface)', () => {
+    it('gives every event an anchor function returning a district id', () => {
+      const s = createInitialState();
+      const districtIds = new Set(s.districts.map((d) => d.id));
+      for (const e of EVENT_CATALOG) {
+        expect(e.anchor, `event ${e.id} has no anchor`).toBeDefined();
+        const id = e.anchor!(s);
+        expect(districtIds.has(id), `event ${e.id} returned ${id}, not a valid district`).toBe(true);
+      }
+    });
+
+    it('anchors port-themed events to the port', () => {
+      const s = createInitialState();
+      for (const id of ['cri-false-flag', 'cri-foreign-coin', 'inc-trade-retaliation']) {
+        const e = EVENT_CATALOG.find((x) => x.id === id)!;
+        expect(e.anchor!(s)).toBe('port');
+      }
+    });
+
+    it('anchors academy-themed events to the university', () => {
+      const s = createInitialState();
+      for (const id of ['sp-samizdat-pamphlet', 'sp-private-school', 'amb-curriculum-update']) {
+        const e = EVENT_CATALOG.find((x) => x.id === id)!;
+        expect(e.anchor!(s)).toBe('university');
+      }
+    });
+
+    it('anchors border-themed events to the garrison', () => {
+      const s = createInitialState();
+      const e = EVENT_CATALOG.find((x) => x.id === 'inc-border-flare')!;
+      expect(e.anchor!(s)).toBe('garrison');
+    });
+
+    it('anchors the small-protest incident to the district with the highest unrest', () => {
+      const s = createInitialState();
+      const target = s.districts.find((d) => d.id === 'outerwards')!;
+      target.unrest = 80;
+      target.awareness = 60;
+      const e = EVENT_CATALOG.find((x) => x.id === 'inc-small-protest')!;
+      expect(e.anchor!(s)).toBe('outerwards');
+    });
+
+    it('anchors the unlicensed-clinic self-provision to the lowest-happiness district', () => {
+      const s = createInitialState();
+      const target = s.districts.find((d) => d.id === 'farmland')!;
+      target.happiness = 5;
+      const e = EVENT_CATALOG.find((x) => x.id === 'sp-unlicensed-clinic')!;
+      expect(e.anchor!(s)).toBe('farmland');
+    });
+
+    it('anchors mutual-aid to the poorest district', () => {
+      const s = createInitialState();
+      // outerwards starts at wealth 25 — already poorest. Confirm.
+      const e = EVENT_CATALOG.find((x) => x.id === 'sp-mutual-aid')!;
+      expect(e.anchor!(s)).toBe('outerwards');
+    });
+  });
 });

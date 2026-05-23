@@ -39,6 +39,16 @@ export interface Event {
   effects: (state: GameState) => void;
   choices?: EventChoice[];
   schedule?: (state: GameState) => PendingEvent[];
+  /**
+   * District id that this event surfaces on. The map UI uses this to place a
+   * callout (and, for choice events, to float the modal near the source).
+   * Static anchors (e.g., "capital") encode the event's narrative location;
+   * dynamic anchors pick the district where the condition lives now (e.g.,
+   * poorest, lowest-happiness, worst-unrest). Optional on the type so test
+   * fixtures stay terse; the catalog test in event-catalog.test.ts asserts
+   * every shipped catalog entry actually defines one.
+   */
+  anchor?: (state: GameState) => string;
 }
 
 /**

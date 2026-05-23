@@ -1,5 +1,17 @@
-import type { Event } from '../sim/types';
+import type { Event, GameState } from '../sim/types';
 import { applyViolentSuppression, injectFearWithFatigue } from '../sim/escalation';
+
+// Dynamic anchors — used by events that surface wherever the condition is
+// worst right now (the district with the lowest happiness, the most-unrested
+// ward, etc.). Each falls back to the Capital if no districts exist.
+const worstUnrest = (s: GameState): string =>
+  [...s.districts].sort((a, b) => b.unrest - a.unrest)[0]?.id ?? 'capital';
+const mostAware = (s: GameState): string =>
+  [...s.districts].sort((a, b) => b.awareness - a.awareness)[0]?.id ?? 'capital';
+const lowestHappiness = (s: GameState): string =>
+  [...s.districts].sort((a, b) => a.happiness - b.happiness)[0]?.id ?? 'capital';
+const poorest = (s: GameState): string =>
+  [...s.districts].sort((a, b) => a.wealth - b.wealth)[0]?.id ?? 'capital';
 
 /**
  * The v1 event catalog (design doc §5.2). The voice is deadpan ministry
@@ -24,6 +36,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'amb-inflation-transitory',
     kind: 'ambient',
+    anchor: () => 'capital',
     text: 'The Bureau of Statistics confirms inflation remains transitory for the ninth consecutive year.',
     weight: (s) => (s.inflation > 5 ? 4 : 0.2),
     effects: () => {},
@@ -31,6 +44,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'amb-record-approval',
     kind: 'ambient',
+    anchor: () => 'capital',
     text: 'State media reports record approval ratings amid renewed national unity.',
     weight: (s) => (s.fear > 30 ? 3 : 0.2),
     effects: () => {},
@@ -38,6 +52,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'amb-park-opens',
     kind: 'ambient',
+    anchor: () => 'capital',
     text: 'A new park opens in the Capital, named for the current Minister of Order.',
     weight: (s) => (s.fear > 40 || s.propagandaBudget > 1500 ? 1 : 0),
     effects: () => {},
@@ -45,6 +60,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'amb-affordability-initiative',
     kind: 'ambient',
+    anchor: () => 'capital',
     text: 'The Ministry of Price Stability launches its third Strategic Affordability Initiative this year.',
     weight: (s) => (s.inflation > 15 ? 3 : 0),
     effects: () => {},
@@ -52,6 +68,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'amb-mandatory-optimism',
     kind: 'ambient',
+    anchor: () => 'port',
     text: 'A Mandatory Optimism Week is declared in the eastern wards.',
     weight: (s) => (s.districts.some((d) => d.happiness < 30) ? 2.5 : 0),
     effects: () => {},
@@ -59,6 +76,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'amb-curriculum-update',
     kind: 'ambient',
+    anchor: () => 'university',
     text: 'School curricula are updated to clarify recent history.',
     weight: (s) => (s.propagandaBudget > 1500 ? 2 : 0),
     effects: () => {},
@@ -70,6 +88,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'inc-border-flare',
     kind: 'incident',
+    anchor: () => 'garrison',
     text: 'Border tensions flare. Defence allocations rise quietly.',
     weight: (s) => (s.fear > 10 ? 2 : 0.5),
     effects: (s) => {
@@ -81,6 +100,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'inc-small-protest',
     kind: 'incident',
+    anchor: worstUnrest,
     text: 'An unscheduled gathering disperses peacefully after Public Order Officials make several arrests.',
     weight: (s) => {
       const hot = s.districts.some((d) => d.awareness > 40 && d.unrest > 20);
@@ -97,6 +117,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'inc-voluntary-underreporting',
     kind: 'incident',
+    anchor: () => 'capital',
     text: 'Receipts arrive short. The Bureau reclassifies the gap as Voluntary Underreporting.',
     weight: (s) => (s.taxRate > 0.4 ? 2 : 0),
     effects: (s) => {
@@ -106,6 +127,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'inc-insufficient-enthusiasm',
     kind: 'incident',
+    anchor: mostAware,
     text: 'A regional inspector is found to have insufficient enthusiasm. He is reassigned.',
     weight: (s) => (s.fear > 50 ? 2 : 0),
     effects: (s) => {
@@ -117,6 +139,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'inc-trade-retaliation',
     kind: 'incident',
+    anchor: () => 'port',
     text: 'A neighbouring state has restricted trade in response to recent rhetoric. Imports slow.',
     weight: () => 0, // chain target only (scheduled by cri-inflation-anger "Blame foreign speculators")
     effects: (s) => {
@@ -131,6 +154,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'cri-leaked-files',
     kind: 'crisis',
+    anchor: () => 'capital',
     text: 'An archivist has leaked documents proving the Harbor Attack was staged.',
     // Weight scales with how many false flags have actually been authorised
     // AND with average awareness — careless overuse OR an awake population
@@ -171,6 +195,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'cri-false-flag',
     kind: 'crisis',
+    anchor: () => 'port',
     text: 'Operations propose a deniable incident in the Port to refocus public attention.',
     weight: (s) => (s.nationalUnrest > 25 ? 1.5 : 0),
     effects: () => {},
@@ -192,6 +217,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'cri-inflation-anger',
     kind: 'crisis',
+    anchor: () => 'capital',
     text: 'Bakers in two markets close their shutters; the Office of Domestic Tranquility downplays the disruption.',
     weight: (s) => (s.inflation > 20 ? 4 : 0),
     effects: () => {},
@@ -226,6 +252,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'cri-foreign-coin',
     kind: 'crisis',
+    anchor: () => 'port',
     text: 'Merchants in the Port District are quietly settling accounts in foreign coin.',
     weight: (s) => (s.districts.some((d) => d.wealth > 70 && d.awareness > 40) ? 2 : 0),
     effects: () => {},
@@ -256,6 +283,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'cri-ministry-expansion',
     kind: 'crisis',
+    anchor: () => 'capital',
     text: 'The Ministry of Internal Affairs requests a discretionary expansion, citing emerging threats.',
     weight: (s) => (s.apparatusUpkeep > Math.max(1, s.treasury) * 0.1 ? 1.5 : 0),
     effects: () => {},
@@ -280,6 +308,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'cri-folk-song',
     kind: 'crisis',
+    anchor: worstUnrest,
     text: 'A folk song mocking the Minister is spreading in three districts.',
     weight: (s) => (s.educationLevel < 0.3 && s.nationalUnrest > 30 ? 2 : 0),
     effects: () => {},
@@ -313,6 +342,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'cri-mutual-aid-martyr',
     kind: 'crisis',
+    anchor: poorest,
     text: 'A detained mutual-aid organiser has died in custody. Independent accounts are circulating.',
     weight: () => 0, // chain target only (scheduled by sp-mutual-aid "Ban it")
     effects: () => {},
@@ -349,6 +379,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'sp-mutual-aid',
     kind: 'self-provision',
+    anchor: poorest,
     text: 'A neighbourhood mutual-aid network has emerged in a poorer ward — care arranged without the state.',
     weight: (s) => {
       const aware = s.districts.some((d) => d.awareness > 30 && d.wealth < 50);
@@ -387,6 +418,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'sp-private-school',
     kind: 'self-provision',
+    anchor: () => 'university',
     text: 'A growing private school co-op is teaching unauthorised civics.',
     weight: (s) => (s.educationLevel < 0.6 ? 1.2 : 0),
     effects: () => {},
@@ -416,6 +448,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'sp-private-watch',
     kind: 'self-provision',
+    anchor: () => 'outerwards',
     text: 'Residents of the Low Quarter have organised a private night-watch — crime is down on their streets.',
     weight: (s) => (s.districts.some((d) => d.wealth < 30) ? 1.2 : 0),
     effects: () => {},
@@ -449,6 +482,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'sp-silver-grams',
     kind: 'self-provision',
+    anchor: () => 'port',
     text: 'Shopkeepers in two markets have begun pricing goods in silver grams.',
     weight: (s) => (s.inflation > 25 ? 2 : 0),
     effects: () => {},
@@ -481,6 +515,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'sp-unlicensed-clinic',
     kind: 'self-provision',
+    anchor: lowestHappiness,
     text: 'An unlicensed clinic in the slums is treating patients faster than the state hospital.',
     weight: (s) => (s.districts.some((d) => d.happiness < 40) ? 1.2 : 0),
     effects: () => {},
@@ -516,6 +551,7 @@ export const EVENT_CATALOG: readonly Event[] = [
   {
     id: 'sp-samizdat-pamphlet',
     kind: 'self-provision',
+    anchor: () => 'university',
     text: 'A samizdat pamphlet titled "On the Visible Hand" is circulating in the academies.',
     weight: (s) => (s.educationLevel < 0.5 ? 1.5 : 0),
     effects: () => {},
