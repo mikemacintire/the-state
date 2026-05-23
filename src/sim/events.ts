@@ -89,11 +89,9 @@ export function fireEvent(
 ): void {
   event.effects(state);
   let chosenOption: string | undefined;
-  let deferred = false;
   if (event.choices && event.choices.length > 0) {
     const requested = onCrisis ? onCrisis(state, event) : 0;
     if (requested === -1) {
-      deferred = true;
       state.pendingCrises.push({
         eventId: event.id,
         text: event.text,
@@ -116,7 +114,6 @@ export function fireEvent(
     text: event.text,
     ...(chosenOption !== undefined ? { chosenOption } : {}),
   });
-  void deferred; // local marker; the pendingCrises push above is the observable effect
 }
 
 /**

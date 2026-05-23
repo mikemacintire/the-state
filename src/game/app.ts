@@ -42,14 +42,19 @@ function bootstrap(): void {
       render();
     });
     renderMap(state, mapEl);
-    renderDashboard(state, dashboardEl, {
-      onTaxRate: (n) => { setTaxRate(state, n); render(); },
-      onPrint: (n) => { printMoney(state, n); render(); },
-      onPropaganda: (n) => { setPropagandaBudget(state, n); render(); },
-      onEducation: (n) => { setEducationLevel(state, n); render(); },
-      onRepression: () => { doRepression(state); render(); },
-      onFearOp: (n) => { spawnFearOp(state, n); render(); },
-    });
+    // Skip re-rendering the dashboard if the user is mid-interaction with one
+    // of its inputs — a full innerHTML wipe would destroy the focused element
+    // and break drag/type. The dashboard re-renders on the next tick.
+    if (!dashboardEl.contains(document.activeElement)) {
+      renderDashboard(state, dashboardEl, {
+        onTaxRate: (n) => { setTaxRate(state, n); render(); },
+        onPrint: (n) => { printMoney(state, n); render(); },
+        onPropaganda: (n) => { setPropagandaBudget(state, n); render(); },
+        onEducation: (n) => { setEducationLevel(state, n); render(); },
+        onRepression: () => { doRepression(state); render(); },
+        onFearOp: (n) => { spawnFearOp(state, n); render(); },
+      });
+    }
     renderFeed(state, feedEl);
     renderModal(state, modalEl, (idx) => {
       resolveCrisis(state, idx);
