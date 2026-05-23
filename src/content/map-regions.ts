@@ -33,3 +33,28 @@ export const MAP_REGIONS: readonly MapRegion[] = [
   // Southgate Quarter — sprawling lower-density south.
   { districtId: 'outerwards', points: '180,330 405,330 405,495 180,495' },
 ];
+
+function computeCentroid(pointsStr: string): { x: number; y: number } {
+  const pts = pointsStr.split(/\s+/).filter(Boolean).map((p) => {
+    const [x, y] = p.split(',').map(Number);
+    return { x, y };
+  });
+  const x = pts.reduce((sum, p) => sum + p.x, 0) / pts.length;
+  const y = pts.reduce((sum, p) => sum + p.y, 0) / pts.length;
+  return { x, y };
+}
+
+const CENTROIDS: Record<string, { x: number; y: number }> = Object.fromEntries(
+  MAP_REGIONS.map((r) => [r.districtId, computeCentroid(r.points)]),
+);
+
+/**
+ * Returns the centroid (mean of polygon vertices) of the named district in
+ * SVG viewBox coordinates (0..800, 0..600). Used by the spatial event
+ * surface to position callouts and the floating crisis modal. Mean-of-
+ * vertices is not the true geometric centroid for non-uniform polygons,
+ * but the regions are author-eyeballed rectangles where the two converge.
+ */
+export function centroidOf(districtId: string): { x: number; y: number } | null {
+  return CENTROIDS[districtId] ?? null;
+}
