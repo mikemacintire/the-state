@@ -25,7 +25,6 @@ function bootstrap(): void {
   const mapEl = document.getElementById('map')!;
   const detailEl = document.getElementById('district-detail-root')!;
   const dashboardEl = document.getElementById('dashboard')!;
-  const modalEl = document.getElementById('modal-root')!;
   const defeatEl = document.getElementById('defeat-root')!;
 
   // If a save exists, offer to resume it — for v1, always auto-resume.
@@ -90,7 +89,9 @@ function bootstrap(): void {
       },
     );
     const svg = mapEl.querySelector('svg.map-svg');
-    if (svg) renderSpatialEvents(state, svg as unknown as SVGElement, EVENT_CATALOG);
+    if (svg) {
+      renderSpatialEvents(state, svg as unknown as SVGElement, EVENT_CATALOG);
+    }
     const selectedDistrict =
       selectedDistrictId !== null
         ? state.districts.find((d) => d.id === selectedDistrictId) ?? null
@@ -112,10 +113,12 @@ function bootstrap(): void {
         onFearOp: (n) => { spawnFearOp(state, n); render(); },
       });
     }
-    renderModal(state, modalEl, (idx) => {
-      resolveCrisis(state, idx);
-      render();
-    });
+    if (svg) {
+      renderModal(state, svg as unknown as SVGElement, EVENT_CATALOG, (idx) => {
+        resolveCrisis(state, idx);
+        render();
+      });
+    }
     renderDefeat(state, defeatEl);
     if (state.lossCause) {
       // Final autosave on game over, then keep the save so the player can

@@ -405,49 +405,57 @@ body {
   font-family: var(--mono);
 }
 
-#modal-root,
 #defeat-root {
   position: fixed;
   inset: 0;
   pointer-events: none;
 }
 
-.modal-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: grid;
-  place-items: center;
+/* Floating crisis panel — lives inside the map SVG as a foreignObject,
+ * positioned at the originating district's centroid. No backdrop: the
+ * player can still examine the rest of the country while deciding. */
+.modal-host {
   pointer-events: auto;
 }
 
 .modal {
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  max-width: 540px;
-  padding: 24px;
+  background: rgba(24, 27, 34, 0.96);
+  border: 1px solid var(--accent);
+  padding: 14px 16px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+  font-size: 12px;
+  line-height: 1.35;
+  pointer-events: auto;
 }
 
 .modal h2 {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--accent);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.modal p {
+  margin: 0;
 }
 
 .modal .choices {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 6px;
+  margin-top: 12px;
 }
 
 .modal .choices button {
   background: var(--bg-elev);
   border: 1px solid var(--border);
   color: var(--fg);
-  padding: 10px 14px;
+  padding: 7px 10px;
   text-align: left;
   cursor: pointer;
   font-family: var(--font);
+  font-size: 12px;
 }
 
 .modal .choices button:hover {
