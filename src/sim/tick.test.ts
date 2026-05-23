@@ -33,11 +33,47 @@ describe('tick', () => {
     expect(s.apparatusUpkeep).toBeGreaterThan(before);
   });
 
-  it('does not advance a run that is already over', () => {
+  it('does not advance a run that is already over (bankruptcy)', () => {
     const s = createInitialState();
     s.lossCause = 'bankruptcy';
     tick(s);
     expect(s.month).toBe(0);
+  });
+
+  it('does not advance a revolted run', () => {
+    const s = createInitialState();
+    s.lossCause = 'revolt';
+    tick(s);
+    expect(s.month).toBe(0);
+  });
+
+  it('KEEPS advancing a spell-breaks run (the §5.3 epilogue) — wealth climbs on its own', () => {
+    const s = createInitialState();
+    s.lossCause = 'spell-breaks';
+    for (const d of s.districts) d.wealth = 50;
+    tick(s, undefined, []);
+    expect(s.month).toBe(1);
+    for (const d of s.districts) expect(d.wealth).toBeGreaterThan(50);
+  });
+
+  it('the spell-breaks epilogue zeroes out the apparatus', () => {
+    const s = createInitialState();
+    s.lossCause = 'spell-breaks';
+    s.taxRate = 0.6;
+    s.propagandaBudget = 9999;
+    s.educationLevel = 1;
+    s.fear = 80;
+    s.inflation = 30;
+    s.apparatusUpkeep = 5000;
+    s.treasury = -10_000;
+    tick(s, undefined, []);
+    expect(s.taxRate).toBe(0);
+    expect(s.propagandaBudget).toBe(0);
+    expect(s.educationLevel).toBe(0);
+    expect(s.fear).toBe(0);
+    expect(s.inflation).toBe(0);
+    expect(s.apparatusUpkeep).toBe(0);
+    expect(s.treasury).toBe(0);
   });
 
   it('drifts district happiness toward its equilibrium each tick', () => {

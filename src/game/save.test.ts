@@ -53,5 +53,6 @@ describe('save / load', () => {
     expect(loaded?.repressionUses).toBe(0);
     expect(loaded?.falseFlagsUsed).toBe(0);
     expect(loaded?.suppressionUses).toEqual({});
+    expect(loaded?.bankruptSince).toBeNull();
   });
 });

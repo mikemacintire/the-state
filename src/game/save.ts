@@ -21,6 +21,7 @@ function fillDefaults(loaded: GameState): GameState {
     repressionUses: loaded.repressionUses ?? 0,
     falseFlagsUsed: loaded.falseFlagsUsed ?? 0,
     suppressionUses: loaded.suppressionUses ?? {},
+    bankruptSince: loaded.bankruptSince ?? null,
   };
 }
 

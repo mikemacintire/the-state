@@ -95,6 +95,13 @@ export interface GameState {
    * `applyViolentSuppression` in `escalation.ts`. Design doc §3.8.
    */
   suppressionUses: Record<string, number>;
+  /**
+   * Month at which the treasury first went non-positive, or null if the
+   * state is solvent. Once set, the §3.6 cascade engages: propaganda and
+   * education become ineffective, and the run ends in `bankruptcy` once
+   * unrest crosses revoltThreshold OR `bankruptcyGraceMonths` elapse.
+   */
+  bankruptSince: number | null;
   lossCause: LossCause | null;
 }
 

@@ -38,15 +38,23 @@ export function awarenessDrift(
   return prosperityRise + inflationRise + brittleness - educationFall - propagandaFall;
 }
 
-/** Advance every district's awareness by one month, clamped to 0..100. */
+/** Advance every district's awareness by one month, clamped to 0..100.
+ *
+ * Bankrupt state cannot pay its bureaucrats or its propagandists; while
+ * `bankruptSince !== null`, education and propaganda effectiveness fall to
+ * zero (the player's settings remain, but the apparatus can't enforce them).
+ * Design doc §3.6 cascade. */
 export function updateAwareness(state: GameState): void {
+  const bankrupt = state.bankruptSince !== null;
+  const effectiveEducation = bankrupt ? 0 : state.educationLevel;
+  const effectivePropaganda = bankrupt ? 0 : state.propagandaBudget;
   for (const d of state.districts) {
     const drift = awarenessDrift(
       d.wealth,
       d.awareness,
       state.inflation,
-      state.educationLevel,
-      state.propagandaBudget,
+      effectiveEducation,
+      effectivePropaganda,
       state.nationalProsperity,
     );
     d.awareness = clamp(

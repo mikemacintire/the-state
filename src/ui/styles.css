@@ -217,3 +217,36 @@ body {
 .district:hover {
   stroke: var(--accent);
 }
+
+/* Spell-Breaks epilogue — a translucent banner that does NOT block the map.
+ * The player can watch the freed country flourish underneath. */
+.epilogue-banner {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(24, 27, 34, 0.88);
+  border: 1px solid var(--accent);
+  padding: 18px 28px;
+  max-width: 560px;
+  pointer-events: auto;
+  text-align: center;
+}
+
+.epilogue-banner h2 {
+  margin: 0 0 8px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+.epilogue-banner p {
+  margin: 6px 0;
+  color: var(--fg);
+}
+
+.epilogue-banner .epilogue-watch {
+  font-style: italic;
+  color: var(--fg-dim);
+  font-size: 12px;
+  margin-top: 10px;
+}

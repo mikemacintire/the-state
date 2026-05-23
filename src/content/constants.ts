@@ -80,4 +80,8 @@ export const CONSTANTS = {
   // --- Loss thresholds ---
   revoltThreshold: 70, // national unrest at or above this triggers revolt
   spellBreaksThreshold: 80, // national prosperity at or above this triggers spell-breaks
+  bankruptcyGraceMonths: 24, // months of insolvency before the cascade closes the run on its own (design doc §3.6)
+
+  // --- Spell Breaks epilogue ---
+  epilogueWealthGrowth: 0.75, // per-month wealth growth during the stateless epilogue — faster than normal baseWealthGrowth (no drag at all)
 } as const;

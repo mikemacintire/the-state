@@ -46,14 +46,19 @@ export function unrestPressure(
   return Math.max(0, miseryPressure + taxPressure - fearSuppression - propagandaSuppression);
 }
 
-/** Advance every district's unrest by one month, clamped to 0..100. */
+/** Advance every district's unrest by one month, clamped to 0..100.
+ *
+ * Propaganda effectiveness drops to zero while the state is bankrupt — the
+ * §3.6 cascade. Tax still bites (the apparatus inertially extracts until
+ * revolt completes the job). */
 export function updateUnrest(state: GameState): void {
+  const effectivePropaganda = state.bankruptSince !== null ? 0 : state.propagandaBudget;
   for (const d of state.districts) {
     const pressure = unrestPressure(
       d.happiness,
       d.awareness,
       state.fear,
-      state.propagandaBudget,
+      effectivePropaganda,
       state.taxRate,
       state.nationalProsperity,
     );

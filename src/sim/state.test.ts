@@ -63,4 +63,9 @@ describe('createInitialState', () => {
     expect(s.falseFlagsUsed).toBe(0);
     expect(s.suppressionUses).toEqual({});
   });
+
+  it('initialises Phase 2 bankruptSince to null (solvent)', () => {
+    const s = createInitialState();
+    expect(s.bankruptSince).toBeNull();
+  });
 });

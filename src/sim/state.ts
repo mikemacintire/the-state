@@ -25,6 +25,7 @@ export function createInitialState(seed: number = 1): GameState {
     repressionUses: 0,
     falseFlagsUsed: 0,
     suppressionUses: {},
+    bankruptSince: null,
     lossCause: null,
   };
 }

@@ -38,4 +38,22 @@ describe('renderDefeat', () => {
     const t2 = el.textContent ?? '';
     expect(t1).not.toBe(t2);
   });
+
+  it('renders the spell-breaks epilogue as a non-blocking banner (not a modal-overlay)', () => {
+    const s = createInitialState();
+    s.lossCause = 'spell-breaks';
+    renderDefeat(s, el);
+    // The full-screen modal-overlay would cover the map; the epilogue uses a
+    // translucent banner instead so the player can keep watching the freed
+    // country flourish underneath.
+    expect(el.querySelector('.modal-overlay')).toBeNull();
+    expect(el.querySelector('.epilogue-banner')).not.toBeNull();
+  });
+
+  it('bankruptcy and revolt still use the full modal overlay (blocking)', () => {
+    const s = createInitialState();
+    s.lossCause = 'bankruptcy';
+    renderDefeat(s, el);
+    expect(el.querySelector('.modal-overlay')).not.toBeNull();
+  });
 });

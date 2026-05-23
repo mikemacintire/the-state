@@ -49,7 +49,8 @@ export class Loop {
 
   private step(): void {
     if (this.speed === 0) return;
-    if (this.state.lossCause !== null) return;
+    // Spell Breaks keeps ticking through the epilogue (§5.3); other losses freeze.
+    if (this.state.lossCause !== null && this.state.lossCause !== 'spell-breaks') return;
     if (this.state.pendingCrises.length > 0) return;
     tick(this.state, () => -1, this.catalog); // defer every choice to the UI modal
     this.onTick();
