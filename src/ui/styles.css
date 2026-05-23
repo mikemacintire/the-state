@@ -116,6 +116,28 @@ body {
   stroke-width: 3;
 }
 
+/* Spatial event callouts — small situation-room labels anchored to the
+ * district their event came from. Embedded in the SVG via foreignObject
+ * so they scale with the map. Pointer-events disabled so they never
+ * intercept district clicks. */
+.event-callout-host {
+  pointer-events: none;
+  transition: opacity 200ms ease-out;
+}
+
+.event-callout {
+  background: rgba(15, 17, 21, 0.92);
+  border: 1px solid var(--accent);
+  color: var(--fg);
+  padding: 6px 9px;
+  font-family: var(--font);
+  font-size: 11px;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+
 #district-detail-root {
   position: absolute;
   top: 80px;

@@ -17,6 +17,8 @@ import { renderDistrictDetail } from '../ui/district-detail';
 import { renderDashboard } from '../ui/dashboard';
 import { renderModal } from '../ui/modal';
 import { renderDefeat } from '../ui/defeat';
+import { renderSpatialEvents } from '../ui/spatial-events';
+import { EVENT_CATALOG } from '../content/event-catalog';
 
 function bootstrap(): void {
   const hudEl = document.getElementById('hud')!;
@@ -87,6 +89,8 @@ function bootstrap(): void {
         render();
       },
     );
+    const svg = mapEl.querySelector('svg.map-svg');
+    if (svg) renderSpatialEvents(state, svg as unknown as SVGElement, EVENT_CATALOG);
     const selectedDistrict =
       selectedDistrictId !== null
         ? state.districts.find((d) => d.id === selectedDistrictId) ?? null
