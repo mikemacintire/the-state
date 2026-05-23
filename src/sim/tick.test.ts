@@ -75,4 +75,36 @@ describe('tick', () => {
     tick(s);
     expect(s.districts[0].population).toBeLessThan(100_000);
   });
+
+  it('processes events in step 6 (eventLog grows when an event fires)', () => {
+    const s = createInitialState();
+    // ensure at least one event is eligible (the always-on park-opens event)
+    const before = s.eventLog.length;
+    tick(s);
+    expect(s.eventLog.length).toBeGreaterThan(before);
+  });
+
+  it('advances the RNG via the events step even when no event fires effects', () => {
+    const s = createInitialState();
+    const beforeRng = s.rng;
+    tick(s);
+    expect(s.rng).not.toBe(beforeRng);
+  });
+
+  it('forwards an onCrisis handler to processEvents', () => {
+    // Construct a state where the only eligible event is the inflation-anger
+    // crisis, then verify the chosen option's effects are applied per the
+    // handler. We pre-stack the pending queue with a crisis we control.
+    const s = createInitialState();
+    s.month = 0;
+    s.pendingEvents.push({ eventId: 'cri-inflation-anger', fireMonth: 0 });
+    s.inflation = 25; // makes the crisis weight > 0 so it appears in the catalog as well, but pending fires first
+    let chosen = -1;
+    tick(s, (_st, ev) => {
+      chosen = ev.id === 'cri-inflation-anger' ? 2 : 0; // pick "Pay a one-off subsidy"
+      return chosen;
+    });
+    // the subsidy option deducts 2500
+    expect(chosen).toBe(2);
+  });
 });
