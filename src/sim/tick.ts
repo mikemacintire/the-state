@@ -15,11 +15,14 @@ import { checkLoss } from './loss';
 /**
  * Advance the simulation by one in-game month. The fixed pipeline mirrors
  * design doc §5.1. An optional `onCrisis` handler is forwarded to the event
- * processor; if omitted, crises take their first choice.
+ * processor; if omitted, crises take their first choice. The catalog defaults
+ * to the real `EVENT_CATALOG` but can be overridden in tests to isolate the
+ * tick from event firing.
  */
 export function tick(
   state: GameState,
   onCrisis?: (state: GameState, event: Event) => number,
+  catalog: readonly Event[] = EVENT_CATALOG,
 ): void {
   if (state.lossCause !== null) return; // a finished run does not advance
 
@@ -44,7 +47,7 @@ export function tick(
   updateAggregates(state);
 
   // 6. Events
-  processEvents(state, EVENT_CATALOG, onCrisis);
+  processEvents(state, catalog, onCrisis);
 
   // 7. Loss check
   checkLoss(state);

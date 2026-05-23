@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { tick } from './tick';
 import { createInitialState } from './state';
+import { EVENT_CATALOG } from '../content/event-catalog';
 
 describe('tick', () => {
   it('advances the calendar by one month', () => {
@@ -55,7 +56,9 @@ describe('tick', () => {
   it('decays national fear each tick', () => {
     const s = createInitialState();
     s.fear = 50;
-    tick(s);
+    // Pass an empty catalog so an event firing (some incidents inject fear)
+    // cannot mask the pure-decay assertion.
+    tick(s, undefined, []);
     expect(s.fear).toBeLessThan(50);
   });
 
@@ -92,19 +95,22 @@ describe('tick', () => {
   });
 
   it('forwards an onCrisis handler to processEvents', () => {
-    // Construct a state where the only eligible event is the inflation-anger
-    // crisis, then verify the chosen option's effects are applied per the
-    // handler. We pre-stack the pending queue with a crisis we control.
+    // Narrow the catalog to the one crisis we care about, so the handler is
+    // only invoked for it and no other event muddies the assertion.
     const s = createInitialState();
     s.month = 0;
     s.pendingEvents.push({ eventId: 'cri-inflation-anger', fireMonth: 0 });
-    s.inflation = 25; // makes the crisis weight > 0 so it appears in the catalog as well, but pending fires first
+    s.inflation = 25;
+    const narrow = [EVENT_CATALOG.find((e) => e.id === 'cri-inflation-anger')!];
     let chosen = -1;
-    tick(s, (_st, ev) => {
-      chosen = ev.id === 'cri-inflation-anger' ? 2 : 0; // pick "Pay a one-off subsidy"
-      return chosen;
-    });
-    // the subsidy option deducts 2500
+    tick(
+      s,
+      (_st, ev) => {
+        chosen = ev.id === 'cri-inflation-anger' ? 2 : 0;
+        return chosen;
+      },
+      narrow,
+    );
     expect(chosen).toBe(2);
   });
 });

@@ -1,4 +1,4 @@
-import type { GameState } from '../sim/types';
+import type { Event, GameState } from '../sim/types';
 import { tick } from '../sim/tick';
 
 /** Base period in ms for 1× speed (one month per BASE_PERIOD_MS of wall clock). */
@@ -9,7 +9,8 @@ export type Speed = 0 | 1 | 2 | 3;
 /**
  * Real-time game loop. setInterval-based; period is BASE_PERIOD_MS divided by
  * current speed. Pauses (skips ticks) when speed=0, when a crisis is pending,
- * or when the run has ended.
+ * or when the run has ended. Optional `catalog` override (for tests) is
+ * forwarded to `tick`; in production it defaults to EVENT_CATALOG inside tick.
  */
 export class Loop {
   private speed: Speed = 1;
@@ -18,6 +19,7 @@ export class Loop {
   constructor(
     private readonly state: GameState,
     private readonly onTick: () => void,
+    private readonly catalog?: readonly Event[],
   ) {}
 
   periodFor(speed: Speed): number {
@@ -49,7 +51,7 @@ export class Loop {
     if (this.speed === 0) return;
     if (this.state.lossCause !== null) return;
     if (this.state.pendingCrises.length > 0) return;
-    tick(this.state, () => -1); // defer every choice to the UI modal
+    tick(this.state, () => -1, this.catalog); // defer every choice to the UI modal
     this.onTick();
   }
 }

@@ -2,6 +2,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { Loop } from './loop';
 import { createInitialState } from '../sim/state';
 
+// Empty catalog isolates Loop timing from event firing. Without this, a
+// choice-bearing event could fire on the very first tick and the Loop's
+// deferring onCrisis would push it onto pendingCrises, pausing the loop.
+const NO_EVENTS: never[] = [];
+
 describe('Loop', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -12,7 +17,7 @@ describe('Loop', () => {
 
   it('does not tick while paused (speed=0)', () => {
     const s = createInitialState();
-    const loop = new Loop(s, () => {});
+    const loop = new Loop(s, () => {}, NO_EVENTS);
     loop.setSpeed(0);
     loop.start();
     vi.advanceTimersByTime(5000);
@@ -22,7 +27,7 @@ describe('Loop', () => {
 
   it('ticks every period when running at speed 1', () => {
     const s = createInitialState();
-    const loop = new Loop(s, () => {});
+    const loop = new Loop(s, () => {}, NO_EVENTS);
     loop.setSpeed(1);
     loop.start();
     vi.advanceTimersByTime(loop.periodFor(1) * 3 + 1);
@@ -32,7 +37,7 @@ describe('Loop', () => {
 
   it('ticks faster at higher speeds', () => {
     const s = createInitialState();
-    const loop = new Loop(s, () => {});
+    const loop = new Loop(s, () => {}, NO_EVENTS);
     loop.setSpeed(3);
     loop.start();
     vi.advanceTimersByTime(loop.periodFor(1) * 3 + 1);
@@ -43,7 +48,7 @@ describe('Loop', () => {
   it('stops ticking when pendingCrises has an entry', () => {
     const s = createInitialState();
     s.pendingCrises.push({ eventId: 'x', text: '...', choices: [{ label: 'A', effects: () => {} }] });
-    const loop = new Loop(s, () => {});
+    const loop = new Loop(s, () => {}, NO_EVENTS);
     loop.setSpeed(1);
     loop.start();
     vi.advanceTimersByTime(loop.periodFor(1) * 5 + 1);
@@ -54,7 +59,7 @@ describe('Loop', () => {
   it('stops ticking when lossCause is set', () => {
     const s = createInitialState();
     s.lossCause = 'revolt';
-    const loop = new Loop(s, () => {});
+    const loop = new Loop(s, () => {}, NO_EVENTS);
     loop.setSpeed(1);
     loop.start();
     vi.advanceTimersByTime(loop.periodFor(1) * 5 + 1);
@@ -65,7 +70,7 @@ describe('Loop', () => {
   it('calls the onTick callback after each tick', () => {
     const s = createInitialState();
     let calls = 0;
-    const loop = new Loop(s, () => { calls++; });
+    const loop = new Loop(s, () => { calls++; }, NO_EVENTS);
     loop.setSpeed(1);
     loop.start();
     vi.advanceTimersByTime(loop.periodFor(1) * 2 + 1);
