@@ -44,4 +44,10 @@ describe('createInitialState', () => {
       expect(d.unrest).toBeLessThanOrEqual(100);
     }
   });
+
+  it('initialises Plan 3 event tracking arrays to empty', () => {
+    const s = createInitialState();
+    expect(s.eventLog).toEqual([]);
+    expect(s.pendingEvents).toEqual([]);
+  });
 });

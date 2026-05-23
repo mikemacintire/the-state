@@ -18,6 +18,8 @@ export function createInitialState(seed: number = 1): GameState {
     fear: 0,
     nationalUnrest: 0,
     nationalProsperity: 0,
+    eventLog: [],
+    pendingEvents: [],
     districts: INITIAL_DISTRICTS.map((d) => ({ ...d })),
     lossCause: null,
   };
