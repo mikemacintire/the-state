@@ -77,4 +77,46 @@ describe('renderMap', () => {
     const outer = mapEl.querySelector('[data-district-id="outerwards"]') as SVGElement;
     expect(capital.getAttribute('fill')).not.toBe(outer.getAttribute('fill'));
   });
+
+  describe('none overlay (regression for BUG 2 — painted map obscured)', () => {
+    it('renders polygons with transparent fill when overlay is "none"', () => {
+      const s = createInitialState();
+      renderMap(s, mapEl, 'none');
+      const polys = mapEl.querySelectorAll('polygon.district');
+      expect(polys.length).toBe(9);
+      for (const p of polys) {
+        const fill = p.getAttribute('fill') ?? '';
+        // Transparent fill keeps polygons clickable but lets the painted
+        // background show through unobscured.
+        const isTransparent =
+          fill === 'transparent' || /rgba\([^)]*,\s*0(\.0+)?\s*\)/.test(fill);
+        expect(isTransparent).toBe(true);
+      }
+    });
+
+    it('keeps polygons clickable under the "none" overlay', () => {
+      const s = createInitialState();
+      let clicked: string | null = null;
+      renderMap(s, mapEl, 'none', () => {}, null, (id) => {
+        clicked = id;
+      });
+      const cap = mapEl.querySelector('[data-district-id="capital"]') as SVGElement;
+      cap.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(clicked).toBe('capital');
+    });
+
+    it('includes "none" as an option in the overlay selector bar', () => {
+      const s = createInitialState();
+      renderMap(s, mapEl);
+      const noneBtn = mapEl.querySelector('.map-overlay-bar button[data-overlay="none"]');
+      expect(noneBtn).not.toBeNull();
+    });
+
+    it('defaults to the "none" overlay so the painted art is visible', () => {
+      const s = createInitialState();
+      renderMap(s, mapEl); // no overlay arg
+      const active = mapEl.querySelector('.map-overlay-bar button.active');
+      expect(active?.getAttribute('data-overlay')).toBe('none');
+    });
+  });
 });

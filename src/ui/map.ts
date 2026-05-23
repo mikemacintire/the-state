@@ -3,21 +3,26 @@ import { MAP_REGIONS } from '../content/map-regions';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-/** Which meter the player is colouring the map by (design doc §6.1). */
-export type Overlay = 'wealth' | 'happiness' | 'awareness' | 'unrest';
+/** Which meter the player is colouring the map by (design doc §6.1).
+ * `'none'` is the default — polygons stay clickable but transparent so the
+ * painted country atlas reads clean. The player opts in to a tint when
+ * they want diagnostic colour. */
+export type Overlay = 'none' | 'wealth' | 'happiness' | 'awareness' | 'unrest';
 
 /** A label and a bright base colour for each overlay's "bad-for-the-regime"
  * end. Color choices intentionally avoid the city-builder "wealth = gold =
  * good" instinct — every overlay is reading "state's concern", and the hues
- * differ so you can tell at a glance which overlay you're in. */
+ * differ so you can tell at a glance which overlay you're in. The `'none'`
+ * entry has no rgb (its fill is transparent regardless). */
 const OVERLAY_META: Record<Overlay, { label: string; rgb: [number, number, number] }> = {
+  none: { label: 'None', rgb: [0, 0, 0] },
   wealth: { label: 'Wealth', rgb: [199, 178, 123] },
   happiness: { label: 'Happiness', rgb: [201, 142, 88] },
   awareness: { label: 'Awareness', rgb: [194, 85, 85] },
   unrest: { label: 'Unrest', rgb: [212, 90, 58] },
 };
 
-const OVERLAYS: Overlay[] = ['wealth', 'happiness', 'awareness', 'unrest'];
+const OVERLAYS: Overlay[] = ['none', 'wealth', 'happiness', 'awareness', 'unrest'];
 
 /**
  * Render the country map: a painted background image with nine click-target
@@ -28,7 +33,7 @@ const OVERLAYS: Overlay[] = ['wealth', 'happiness', 'awareness', 'unrest'];
 export function renderMap(
   state: GameState,
   el: HTMLElement,
-  overlay: Overlay = 'wealth',
+  overlay: Overlay = 'none',
   onOverlayChange: (o: Overlay) => void = () => {},
   selectedDistrictId: string | null = null,
   onDistrictClick: (id: string) => void = () => {},
@@ -100,6 +105,8 @@ function makeMapSvg(
 
 function districtMeterValue(d: District, overlay: Overlay): number {
   switch (overlay) {
+    case 'none':
+      return 0;
     case 'wealth':
       return d.wealth;
     case 'happiness':
@@ -112,11 +119,14 @@ function districtMeterValue(d: District, overlay: Overlay): number {
 }
 
 /**
- * Translucent fill colour for a region tile under the given overlay. Alpha
- * scales with the meter so an empty district reads as nearly bare image and
- * a full-meter district reads as a strong wash.
+ * Fill colour for a region tile under the given overlay. `'none'` returns a
+ * transparent fill so the painted background shows through (polygons stay
+ * clickable). Every other overlay returns a translucent wash whose alpha
+ * scales with the meter — an empty district reads as nearly bare image and
+ * a full-meter district reads as a strong tint.
  */
 function overlayFill(overlay: Overlay, value: number): string {
+  if (overlay === 'none') return 'transparent';
   const [r, g, b] = OVERLAY_META[overlay].rgb;
   const clamped = Math.max(0, Math.min(100, value));
   const alpha = 0.1 + (clamped / 100) * 0.55;

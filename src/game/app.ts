@@ -38,7 +38,7 @@ function bootstrap(): void {
   updateAggregates(state);
 
   let speed: Speed = 1;
-  let overlay: Overlay = 'wealth';
+  let overlay: Overlay = 'none';
   let selectedDistrictId: string | null = null;
 
   // Trajectory tracking: compare each tick to the previous tick's reading so
