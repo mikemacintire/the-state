@@ -1,20 +1,53 @@
-import type { Event, GameState } from './types';
+import type { Event, EventKind, GameState } from './types';
 import { nextRandom } from './rng';
+
+/**
+ * Per-kind anti-repeat cooldown for the picker — events fired within the last
+ * N months are weighted to zero so the same line cannot dominate the feed
+ * the way the v1 catalog did. Scheduled (pending) events bypass this and
+ * still chain as authored.
+ */
+export const COOLDOWN_MONTHS: Record<EventKind, number> = {
+  ambient: 6,
+  incident: 6,
+  crisis: 12,
+  'self-provision': 12,
+};
 
 /**
  * Pick one event from the catalog using a state-weighted draw. Each event's
  * `weight(state)` returns a non-negative number; events with weight 0 are
- * ineligible. The draw consumes one RNG step and returns the next RNG state so
- * the caller can advance `state.rng`.
+ * ineligible. An event that fired within its kind's cooldown window (see
+ * `COOLDOWN_MONTHS`) is also weighted to zero, regardless of its raw weight.
+ * The draw consumes one RNG step and returns the next RNG state so the
+ * caller can advance `state.rng`.
  */
 export function pickEvent(
   state: GameState,
   catalog: readonly Event[],
 ): { event: Event | null; rngState: number } {
+  // Walk recent log to find last-fired month per event id. The longest
+  // cooldown bounds how far back we need to look.
+  const longestCooldown = Math.max(...Object.values(COOLDOWN_MONTHS));
+  const lastFiredByEvent = new Map<string, number>();
+  for (let i = state.eventLog.length - 1; i >= 0; i--) {
+    const entry = state.eventLog[i];
+    if (entry.month < state.month - longestCooldown) break;
+    if (!lastFiredByEvent.has(entry.eventId)) {
+      lastFiredByEvent.set(entry.eventId, entry.month);
+    }
+  }
+
   let total = 0;
   const weights = new Array<number>(catalog.length);
   for (let i = 0; i < catalog.length; i++) {
-    const w = Math.max(0, catalog[i].weight(state));
+    const event = catalog[i];
+    const lastFired = lastFiredByEvent.get(event.id);
+    if (lastFired !== undefined && state.month - lastFired < COOLDOWN_MONTHS[event.kind]) {
+      weights[i] = 0;
+      continue;
+    }
+    const w = Math.max(0, event.weight(state));
     weights[i] = w;
     total += w;
   }

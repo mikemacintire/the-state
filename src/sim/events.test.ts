@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { pickEvent, fireEvent, processEvents, resolveCrisis } from './events';
+import { pickEvent, fireEvent, processEvents, resolveCrisis, COOLDOWN_MONTHS } from './events';
 import { createInitialState } from './state';
-import type { Event } from './types';
+import type { Event, EventKind } from './types';
 
 function noopEffects(): void {}
 
-function evt(id: string, weight: number): Event {
+function evt(id: string, weight: number, kind: EventKind = 'ambient'): Event {
   return {
     id,
-    kind: 'ambient',
+    kind,
     text: id,
     weight: () => weight,
     effects: noopEffects,
@@ -63,6 +63,45 @@ describe('pickEvent', () => {
       rng = r.rngState;
     }
     expect(commonCount).toBeGreaterThan(150); // ~99% of 200
+  });
+
+  describe('anti-repeat cooldown', () => {
+    it('excludes an event from the pool if it fired within its kind cooldown', () => {
+      const s = createInitialState();
+      s.month = 3;
+      s.eventLog.push({ month: 1, eventId: 'park', text: 'park' });
+      // park is ambient → 6-month cooldown; only 2 months have passed
+      const cat = [evt('park', 10, 'ambient'), evt('other', 1, 'ambient')];
+      const r = pickEvent(s, cat);
+      expect(r.event?.id).toBe('other');
+    });
+
+    it('lets the event return to the pool once its cooldown expires', () => {
+      const s = createInitialState();
+      s.month = 10;
+      s.eventLog.push({ month: 1, eventId: 'park', text: 'park' });
+      // 9 months passed > 6 ambient cooldown
+      const cat = [evt('park', 10, 'ambient'), evt('other', 1, 'ambient')];
+      const r = pickEvent(s, cat);
+      expect(r.event?.id).toBe('park'); // weighted 10 vs 1, easy win
+    });
+
+    it('uses the longer 12-month cooldown for crises and self-provision', () => {
+      const s = createInitialState();
+      s.month = 9;
+      s.eventLog.push({ month: 1, eventId: 'leak', text: 'leak' });
+      // 8 months passed: still inside the 12-month crisis cooldown
+      const cat = [evt('leak', 10, 'crisis'), evt('other', 1, 'crisis')];
+      const r = pickEvent(s, cat);
+      expect(r.event?.id).toBe('other');
+    });
+
+    it('exposes COOLDOWN_MONTHS so balance can be tuned in one place', () => {
+      expect(COOLDOWN_MONTHS.ambient).toBe(6);
+      expect(COOLDOWN_MONTHS.incident).toBe(6);
+      expect(COOLDOWN_MONTHS.crisis).toBe(12);
+      expect(COOLDOWN_MONTHS['self-provision']).toBe(12);
+    });
   });
 });
 

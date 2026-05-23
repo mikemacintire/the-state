@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { runHeadless, type Strategy } from './harness';
+import type { Event, GameState } from './types';
 
 describe('events-balance — structural truths', () => {
   it('a run logs at least one event over many months', () => {
@@ -33,17 +34,41 @@ describe('events-balance — structural truths', () => {
   });
 
   it('crisis choices can change the outcome — refusing every crisis differs from accepting every crisis', () => {
-    const refuse: Strategy = () => ({ taxRate: 0.3 });
-    refuse.onCrisis = () => 0; // always pick first option
-
-    const accept: Strategy = () => ({ taxRate: 0.3 });
-    accept.onCrisis = (_s, ev) => (ev.choices ? ev.choices.length - 1 : 0); // always last option
-
-    const a = runHeadless({ seed: 9, strategy: refuse, maxMonths: 240 });
-    const b = runHeadless({ seed: 9, strategy: accept, maxMonths: 240 });
-    // It is enough that the two diverge (extraction or months differ);
-    // crises move the system, so two opposite policies should not produce
-    // identical RunResults.
-    expect(a).not.toEqual(b);
+    // The structural truth is that crisis CHOICES move the system. To
+    // demonstrate it the run must actually surface crises — a tax-only path
+    // can hit spell-breaks before any crisis fires. So try a few
+    // crisis-provoking strategy/seed pairs and assert at least one diverges.
+    const makeStrategy = (
+      base: (s: GameState) => ReturnType<Strategy>,
+      onCrisis: NonNullable<Strategy['onCrisis']>,
+    ): Strategy => {
+      const strat: Strategy = (s) => base(s);
+      strat.onCrisis = onCrisis;
+      return strat;
+    };
+    const refuseChoice = () => 0;
+    const acceptChoice = (_s: GameState, ev: Event) =>
+      ev.choices ? ev.choices.length - 1 : 0;
+    // Print-heavy strategies guarantee inflation surfaces cri-inflation-anger,
+    // whose three choices have very different downstream effects.
+    const strategies: Array<(s: GameState) => ReturnType<Strategy>> = [
+      (s) => ({ taxRate: 0.3, print: s.month === 0 ? 30000 : 0 }),
+      (s) => ({ taxRate: 0.4, print: s.month < 6 ? 5000 : 0 }),
+      (s) => ({ taxRate: 0.2, print: s.month % 12 === 0 ? 10000 : 0 }),
+    ];
+    let foundDivergence = false;
+    outer: for (const base of strategies) {
+      for (const seed of [3, 9, 17, 42, 99]) {
+        const refuse = makeStrategy(base, refuseChoice);
+        const accept = makeStrategy(base, acceptChoice);
+        const a = runHeadless({ seed, strategy: refuse, maxMonths: 240 });
+        const b = runHeadless({ seed, strategy: accept, maxMonths: 240 });
+        if (JSON.stringify(a) !== JSON.stringify(b)) {
+          foundDivergence = true;
+          break outer;
+        }
+      }
+    }
+    expect(foundDivergence).toBe(true);
   });
 });
