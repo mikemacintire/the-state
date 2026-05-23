@@ -1,0 +1,219 @@
+/* Dark "situation-room" base theme. Design doc §6.3: restrained, official, dark UI. */
+:root {
+  --bg: #0f1115;
+  --bg-panel: #181b22;
+  --bg-elev: #1f242d;
+  --fg: #d8dde6;
+  --fg-dim: #8d97a8;
+  --accent: #c7b27b; /* desaturated official-document gold */
+  --danger: #c25555;
+  --warn: #d49a3a;
+  --good: #5a8c5a;
+  --border: #262b34;
+  --font: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'Roboto Mono', ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 14px;
+  height: 100%;
+  overflow: hidden;
+}
+
+#app {
+  display: grid;
+  grid-template-rows: 64px 1fr 160px;
+  height: 100vh;
+}
+
+#hud {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0 20px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+}
+
+#board {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 0;
+  overflow: hidden;
+}
+
+#map {
+  background: var(--bg);
+  overflow: auto;
+}
+
+#dashboard {
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  padding: 16px;
+  overflow: auto;
+}
+
+#feed {
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  padding: 12px 20px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--fg-dim);
+}
+
+.hud-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud-stat .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+}
+
+.hud-stat .value {
+  font-family: var(--mono);
+  font-size: 18px;
+}
+
+.hud-stat .value.danger {
+  color: var(--danger);
+}
+
+.hud-stat .value.warn {
+  color: var(--warn);
+}
+
+.speed-controls {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.speed-controls button {
+  background: var(--bg-elev);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  font-family: var(--mono);
+  cursor: pointer;
+}
+
+.speed-controls button.active {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.lever {
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.lever h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+}
+
+.lever input[type='range'],
+.lever input[type='number'] {
+  width: 100%;
+  background: var(--bg-panel);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  padding: 4px;
+}
+
+.lever button {
+  width: 100%;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  font-family: var(--mono);
+}
+
+#modal-root,
+#defeat-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+}
+
+.modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  max-width: 540px;
+  padding: 24px;
+}
+
+.modal h2 {
+  margin: 0 0 12px;
+  color: var(--accent);
+}
+
+.modal .choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.modal .choices button {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 10px 14px;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.modal .choices button:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.feed-entry {
+  margin: 2px 0;
+}
+
+.district {
+  fill: var(--bg-elev);
+  stroke: var(--border);
+  cursor: pointer;
+}
+
+.district:hover {
+  stroke: var(--accent);
+}
