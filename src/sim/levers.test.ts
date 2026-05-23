@@ -117,6 +117,21 @@ describe('doRepression', () => {
     expect(s.treasury).toBe(treasuryBefore);
     expect(s.districts[0].unrest).toBe(unrestBefore);
   });
+
+  it('increments state.repressionUses and escalates the awareness spike per use', () => {
+    const s = createInitialState();
+    s.treasury = 10_000;
+    const baselineAwareness = s.districts[0].awareness;
+    doRepression(s);
+    expect(s.repressionUses).toBe(1);
+    const firstSpike = s.districts[0].awareness - baselineAwareness;
+    // Reset awareness, run again — the second hit should sting harder.
+    for (const d of s.districts) d.awareness = baselineAwareness;
+    doRepression(s);
+    expect(s.repressionUses).toBe(2);
+    const secondSpike = s.districts[0].awareness - baselineAwareness;
+    expect(secondSpike).toBeGreaterThan(firstSpike);
+  });
 });
 
 describe('spawnFearOp', () => {
@@ -124,8 +139,21 @@ describe('spawnFearOp', () => {
     const s = createInitialState();
     s.treasury = 5000;
     spawnFearOp(s, 10);
+    // First op with zero fatigue lands at full strength.
     expect(s.fear).toBe(10);
     expect(s.treasury).toBe(5000 - 10 * CONSTANTS.fearOpCostPerUnit);
+  });
+
+  it('lands less fear per dollar as fearFatigue accumulates', () => {
+    const s = createInitialState();
+    s.treasury = 100_000;
+    spawnFearOp(s, 20);
+    const firstFear = s.fear;
+    const firstFatigue = s.fearFatigue;
+    expect(firstFatigue).toBeGreaterThan(0);
+    spawnFearOp(s, 20);
+    const secondDelta = s.fear - firstFear;
+    expect(secondDelta).toBeLessThan(firstFear); // second 20-unit op landed less than first
   });
 
   it('ignores non-positive amounts', () => {

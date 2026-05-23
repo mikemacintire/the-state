@@ -53,12 +53,16 @@ export const CONSTANTS = {
   fearFloor: 0,
   fearCeiling: 100,
   fearDecay: 0.92, // monthly retention factor (8%/month decay) — fear must be re-manufactured per §3.5
+  fearFatigueDecay: 0.95, // monthly retention factor for fearFatigue — slow, so fresh threats are needed
+  fearFatigueGainPerUnit: 0.05, // fatigue raised per 1 raw point of fear injected — 20 units → +1 fatigue → half-effective ops
 
   // --- Lever costs and effects ---
   educationUpkeepPerLevel: 200, // monthly $ cost per unit of educationLevel
   educationWealthDrag: 0.05, // wealth growth lost per unit of educationLevel
   repressionCost: 500, // treasury cost per repression action
   repressionUnrestCut: 8, // unrest cut per repression action, per district — small; spam-then-spike-awareness is the design
+  repressionEscalationPerUse: 0.15, // each prior use raises the awareness spike by 15% of base — ~7 uses doubles it
+  suppressionEscalationPerUse: 0.5, // each prior "crush" pick on the same event raises that event's awareness penalty by 50% of base
   fearOpCostPerUnit: 50, // treasury cost per unit of fear injected by spawnFearOp
 
   // --- Emigration ---

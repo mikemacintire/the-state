@@ -15,12 +15,16 @@ export function createInitialState(seed: number = 1): GameState {
     propagandaBudget: 0,
     educationLevel: 0,
     fear: 0,
+    fearFatigue: 0,
     nationalUnrest: 0,
     nationalProsperity: 0,
     eventLog: [],
     pendingEvents: [],
     pendingCrises: [],
     districts: INITIAL_DISTRICTS.map((d) => ({ ...d })),
+    repressionUses: 0,
+    falseFlagsUsed: 0,
+    suppressionUses: {},
     lossCause: null,
   };
 }

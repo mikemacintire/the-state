@@ -55,4 +55,12 @@ describe('createInitialState', () => {
     const s = createInitialState();
     expect(s.pendingCrises).toEqual([]);
   });
+
+  it('initialises Phase 1D escalation counters to zero / empty', () => {
+    const s = createInitialState();
+    expect(s.fearFatigue).toBe(0);
+    expect(s.repressionUses).toBe(0);
+    expect(s.falseFlagsUsed).toBe(0);
+    expect(s.suppressionUses).toEqual({});
+  });
 });

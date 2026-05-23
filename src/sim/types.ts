@@ -64,12 +64,37 @@ export interface GameState {
   propagandaBudget: number;
   educationLevel: number;
   fear: number;
+  /**
+   * Diminishing-returns counter for fear ops. Each `spawnFearOp` (and the
+   * fear-injecting event choices) raise fatigue; with fatigue f, injecting N
+   * raw fear points actually adds `N / (1 + f)`. Decays slowly via
+   * `updateFear`. Design doc §3.5 fatigue catch.
+   */
+  fearFatigue: number;
   nationalUnrest: number;
   nationalProsperity: number;
   eventLog: EventLogEntry[];
   pendingEvents: PendingEvent[];
   pendingCrises: PendingCrisis[];
   districts: District[];
+  /**
+   * Lifetime count of `doRepression` calls. Each call escalates the awareness
+   * spike: spike = base × (1 + uses × `repressionEscalationPerUse`). The mask
+   * slips harder every time (design doc §4.5).
+   */
+  repressionUses: number;
+  /**
+   * Lifetime count of "Authorise" picks on cri-false-flag. Drives both the
+   * picker weight of cri-leaked-files (more flags → higher leak chance) and
+   * future operation costs. Design doc §4.6 exposure-risk-scales-with-overuse.
+   */
+  falseFlagsUsed: number;
+  /**
+   * Per-event-id count of "crush / ban / shut down" picks. Each pick of the
+   * same violent option escalates that event's awareness spike via
+   * `applyViolentSuppression` in `escalation.ts`. Design doc §3.8.
+   */
+  suppressionUses: Record<string, number>;
   lossCause: LossCause | null;
 }
 

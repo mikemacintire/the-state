@@ -1,4 +1,5 @@
 import type { Event } from '../sim/types';
+import { applyViolentSuppression, injectFearWithFatigue } from '../sim/escalation';
 
 /**
  * The v1 event catalog (design doc §5.2). The voice is deadpan ministry
@@ -10,6 +11,11 @@ import type { Event } from '../sim/types';
  * Chains are wired by pushing pendingEvents directly from choice effects;
  * authored chain targets carry weight 0 so the picker never picks them
  * (only `processEvents` step 1 fires them).
+ *
+ * Violent "crush" choices go through `applyViolentSuppression` so the same
+ * Ban-it / Shut-it-down / Suppress-the-story click stings more every time;
+ * fear-injecting choices route through `injectFearWithFatigue` so manufactured
+ * fear has diminishing potency. See src/sim/escalation.ts.
  */
 export const EVENT_CATALOG: readonly Event[] = [
   // ============================================================
@@ -68,6 +74,7 @@ export const EVENT_CATALOG: readonly Event[] = [
     weight: (s) => (s.fear > 10 ? 2 : 0.5),
     effects: (s) => {
       s.treasury -= 300;
+      // natural fear event — not subject to fatigue (fatigue is for manufactured ops)
       s.fear = Math.min(100, s.fear + 5);
     },
   },
@@ -125,11 +132,14 @@ export const EVENT_CATALOG: readonly Event[] = [
     id: 'cri-leaked-files',
     kind: 'crisis',
     text: 'An archivist has leaked documents proving the Harbor Attack was staged.',
+    // Weight scales with how many false flags have actually been authorised
+    // AND with average awareness — careless overuse OR an awake population
+    // makes a leak more likely. With 0 false flags this can never surface.
     weight: (s) => {
-      const recent = s.eventLog.some(
-        (e) => e.eventId === 'cri-false-flag' && e.month >= s.month - 24,
-      );
-      return recent ? 2 : 0;
+      if (s.falseFlagsUsed === 0) return 0;
+      const avgAwareness =
+        s.districts.reduce((a, d) => a + d.awareness, 0) / s.districts.length;
+      return s.falseFlagsUsed * (avgAwareness / 50);
     },
     effects: () => {},
     choices: [
@@ -137,14 +147,14 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Suppress the story',
         effects: (s) => {
           s.treasury -= 2000;
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 2);
+          applyViolentSuppression(s, 'cri-leaked-files', 2);
         },
       },
       {
         label: 'Discredit the leaker',
         effects: (s) => {
           s.treasury -= 500;
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 5);
+          applyViolentSuppression(s, 'cri-leaked-files', 5);
         },
       },
       {
@@ -169,13 +179,15 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Authorise the operation',
         effects: (s) => {
           s.treasury -= 1500;
-          s.fear = Math.min(100, s.fear + 20);
+          s.falseFlagsUsed += 1;
+          injectFearWithFatigue(s, 20);
+          // Plant the seed for a possible investigation crisis 6 months out.
+          // Each Authorise plants its own — repeat offenders get repeat leaks.
+          s.pendingEvents.push({ eventId: 'cri-leaked-files', fireMonth: s.month + 6 });
         },
       },
       { label: 'Decline', effects: () => {} },
     ],
-    // Authorising plants a possible investigation crisis 6 months out.
-    schedule: (s) => [{ eventId: 'cri-leaked-files', fireMonth: s.month + 6 }],
   },
   {
     id: 'cri-inflation-anger',
@@ -187,7 +199,7 @@ export const EVENT_CATALOG: readonly Event[] = [
       {
         label: 'Blame foreign speculators',
         effects: (s) => {
-          s.fear = Math.min(100, s.fear + 8);
+          injectFearWithFatigue(s, 8);
           for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 2);
           // Chain: a real foreign actor reads the speech and reciprocates.
           s.pendingEvents.push({ eventId: 'inc-trade-retaliation', fireMonth: s.month + 4 });
@@ -222,7 +234,7 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Outlaw possession',
         effects: (s) => {
           s.treasury -= 600;
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 4);
+          applyViolentSuppression(s, 'cri-foreign-coin', 4);
         },
       },
       {
@@ -252,7 +264,7 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Approve',
         effects: (s) => {
           s.apparatusUpkeep += 100;
-          s.fear = Math.min(100, s.fear + 4);
+          injectFearWithFatigue(s, 4);
         },
       },
       { label: 'Defer', effects: () => {} },
@@ -276,10 +288,8 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Arrest the singers',
         effects: (s) => {
           s.treasury -= 300;
-          for (const d of s.districts) {
-            d.awareness = Math.min(100, d.awareness + 5);
-            d.unrest = Math.max(0, d.unrest - 4);
-          }
+          applyViolentSuppression(s, 'cri-folk-song', 5);
+          for (const d of s.districts) d.unrest = Math.max(0, d.unrest - 4);
         },
       },
       {
@@ -311,14 +321,14 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Suppress the accounts',
         effects: (s) => {
           s.treasury -= 1500;
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 3);
+          applyViolentSuppression(s, 'cri-mutual-aid-martyr', 3);
         },
       },
       {
         label: 'Blame outside agitators',
         effects: (s) => {
-          s.fear = Math.min(100, s.fear + 6);
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 5);
+          injectFearWithFatigue(s, 6);
+          applyViolentSuppression(s, 'cri-mutual-aid-martyr', 5);
         },
       },
       {
@@ -350,7 +360,7 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Ban it',
         effects: (s) => {
           s.treasury -= 500;
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 4);
+          applyViolentSuppression(s, 'sp-mutual-aid', 4);
           // Chain: a detainee's death surfaces three months later.
           s.pendingEvents.push({ eventId: 'cri-mutual-aid-martyr', fireMonth: s.month + 3 });
         },
@@ -385,7 +395,7 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Shut it down',
         effects: (s) => {
           s.treasury -= 400;
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 6);
+          applyViolentSuppression(s, 'sp-private-school', 6);
         },
       },
       {
@@ -414,7 +424,7 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Disband',
         effects: (s) => {
           s.treasury -= 400;
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 5);
+          applyViolentSuppression(s, 'sp-private-watch', 5);
         },
       },
       {
@@ -447,7 +457,7 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Confiscate the scales',
         effects: (s) => {
           s.treasury -= 600;
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 4);
+          applyViolentSuppression(s, 'sp-silver-grams', 4);
         },
       },
       {
@@ -479,7 +489,7 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Close it',
         effects: (s) => {
           s.treasury -= 300;
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 5);
+          applyViolentSuppression(s, 'sp-unlicensed-clinic', 5);
           const sick = [...s.districts].sort((a, b) => a.happiness - b.happiness)[0];
           if (sick) sick.happiness = Math.max(0, sick.happiness - 3);
         },
@@ -514,7 +524,7 @@ export const EVENT_CATALOG: readonly Event[] = [
         label: 'Seize copies',
         effects: (s) => {
           s.treasury -= 500;
-          for (const d of s.districts) d.awareness = Math.min(100, d.awareness + 4);
+          applyViolentSuppression(s, 'sp-samizdat-pamphlet', 4);
         },
       },
       {

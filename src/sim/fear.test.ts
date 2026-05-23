@@ -24,4 +24,12 @@ describe('updateFear', () => {
     updateFear(s);
     expect(s.fear).toBeGreaterThan(90);
   });
+
+  it('decays fearFatigue toward zero each month', () => {
+    const s = createInitialState();
+    s.fearFatigue = 2;
+    updateFear(s);
+    expect(s.fearFatigue).toBeLessThan(2);
+    expect(s.fearFatigue).toBeGreaterThan(0);
+  });
 });
