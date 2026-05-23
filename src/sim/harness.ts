@@ -1,4 +1,4 @@
-import type { GameState, RunResult } from './types';
+import type { Event, GameState, RunResult } from './types';
 import { createInitialState } from './state';
 import { tick } from './tick';
 import {
@@ -12,9 +12,9 @@ import {
 
 /**
  * A Strategy is an automated "player": each month it inspects the state and
- * returns the decisions to apply before the tick. This is how balance is
- * explored without a UI (design doc §6.4). Plan 2 widens the decision type to
- * cover all six levers.
+ * returns the decisions to apply before the tick. Plan 3 adds an optional
+ * `onCrisis` callback for resolving crisis events headlessly; if omitted,
+ * crises take their first choice.
  */
 export interface Strategy {
   (state: GameState): {
@@ -25,6 +25,7 @@ export interface Strategy {
     repression?: boolean;
     fearOp?: number;
   };
+  onCrisis?: (state: GameState, event: Event) => number;
 }
 
 /** Run one headless game to completion (a loss) or to `maxMonths`. */
@@ -42,7 +43,7 @@ export function runHeadless(opts: {
     if (decision.educationLevel !== undefined) setEducationLevel(state, decision.educationLevel);
     if (decision.repression) doRepression(state);
     if (decision.fearOp !== undefined && decision.fearOp > 0) spawnFearOp(state, decision.fearOp);
-    tick(state);
+    tick(state, opts.strategy.onCrisis);
   }
   return {
     monthsSurvived: state.month,
