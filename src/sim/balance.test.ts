@@ -8,9 +8,15 @@ describe('fiscal vise — structural balance', () => {
     expect(r.monthsSurvived).toBeLessThan(60);
   });
 
-  it('a steady, moderate tax cannot outrun the bureaucracy forever — the vise always closes', () => {
+  it('a steady, moderate tax cannot outrun the natural pressures forever — the run always ends', () => {
+    // Plan 1 originally asserted lossCause === 'bankruptcy' here, because
+    // bankruptcy was the only loss condition. Plan 2 adds 'revolt' and
+    // 'spell-breaks'; under this moderate-tax-no-other-controls strategy the
+    // wealth/happiness equilibrium climbs high enough to trip spell-breaks
+    // before bankruptcy. The structural truth — the run always ends — holds;
+    // we just no longer name which loss closes it.
     const r = runHeadless({ strategy: () => ({ taxRate: 0.3 }), maxMonths: 2400 });
-    expect(r.lossCause).toBe('bankruptcy');
+    expect(r.lossCause).not.toBeNull();
   });
 
   it('a moderate tax still buys many years of rule before the vise closes', () => {
