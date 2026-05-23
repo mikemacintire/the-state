@@ -41,11 +41,13 @@ export function pickEvent(
  * `onCrisis` callback (default choice 0), schedule any follow-up events, and
  * append a log entry. Pure mutation; does not advance the RNG.
  *
+ * If `onCrisis` returns `-1`, the choice is **deferred**: no choice effect is
+ * applied, the crisis is pushed onto `state.pendingCrises` for later
+ * resolution via `resolveCrisis(state, idx)`, and the log entry is added
+ * without a `chosenOption` (it will be filled in when `resolveCrisis` runs).
+ *
  * Any event with a non-empty `choices` array invokes `onCrisis` — that
- * includes both `crisis` kind (modal in the UI) and `self-provision` kind
- * (the ban/tax/co-opt/let-it-run response). The `kind` field is for the UI
- * to decide presentation (modal vs feed); the simulation itself just sees
- * "does this event need a choice."
+ * includes both `crisis` and `self-provision` kinds.
  */
 export function fireEvent(
   state: GameState,
@@ -54,12 +56,22 @@ export function fireEvent(
 ): void {
   event.effects(state);
   let chosenOption: string | undefined;
+  let deferred = false;
   if (event.choices && event.choices.length > 0) {
     const requested = onCrisis ? onCrisis(state, event) : 0;
-    const idx = Math.max(0, Math.min(event.choices.length - 1, requested));
-    const choice = event.choices[idx];
-    choice.effects(state);
-    chosenOption = choice.label;
+    if (requested === -1) {
+      deferred = true;
+      state.pendingCrises.push({
+        eventId: event.id,
+        text: event.text,
+        choices: event.choices,
+      });
+    } else {
+      const idx = Math.max(0, Math.min(event.choices.length - 1, requested));
+      const choice = event.choices[idx];
+      choice.effects(state);
+      chosenOption = choice.label;
+    }
   }
   if (event.schedule) {
     const queued = event.schedule(state);
@@ -71,6 +83,7 @@ export function fireEvent(
     text: event.text,
     ...(chosenOption !== undefined ? { chosenOption } : {}),
   });
+  void deferred; // local marker; the pendingCrises push above is the observable effect
 }
 
 /**
@@ -106,4 +119,25 @@ export function processEvents(
   const { event, rngState } = pickEvent(state, catalog);
   state.rng = rngState;
   if (event) fireEvent(state, event, onCrisis);
+}
+
+/**
+ * Resolve the head of `state.pendingCrises` by applying the chosen option's
+ * effects and removing it from the queue. Also updates the matching event-log
+ * entry's `chosenOption`. A no-op if the queue is empty.
+ */
+export function resolveCrisis(state: GameState, choiceIdx: number): void {
+  const head = state.pendingCrises.shift();
+  if (!head) return;
+  const idx = Math.max(0, Math.min(head.choices.length - 1, choiceIdx));
+  const choice = head.choices[idx];
+  choice.effects(state);
+  // Backfill chosenOption on the most recent matching log entry that lacks one.
+  for (let i = state.eventLog.length - 1; i >= 0; i--) {
+    const entry = state.eventLog[i];
+    if (entry.eventId === head.eventId && entry.chosenOption === undefined) {
+      entry.chosenOption = choice.label;
+      break;
+    }
+  }
 }

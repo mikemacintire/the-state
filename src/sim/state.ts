@@ -2,7 +2,6 @@ import type { GameState } from './types';
 import { CONSTANTS } from '../content/constants';
 import { INITIAL_DISTRICTS } from '../content/districts';
 
-/** Build a fresh GameState for a new run. `seed` makes the run reproducible. */
 export function createInitialState(seed: number = 1): GameState {
   return {
     month: 0,
@@ -20,6 +19,7 @@ export function createInitialState(seed: number = 1): GameState {
     nationalProsperity: 0,
     eventLog: [],
     pendingEvents: [],
+    pendingCrises: [],
     districts: INITIAL_DISTRICTS.map((d) => ({ ...d })),
     lossCause: null,
   };

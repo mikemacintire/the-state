@@ -50,4 +50,9 @@ describe('createInitialState', () => {
     expect(s.eventLog).toEqual([]);
     expect(s.pendingEvents).toEqual([]);
   });
+
+  it('initialises pendingCrises to empty', () => {
+    const s = createInitialState();
+    expect(s.pendingCrises).toEqual([]);
+  });
 });
