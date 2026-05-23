@@ -12,7 +12,8 @@ import { updateAggregates } from '../sim/aggregates';
 import { Loop, type Speed } from './loop';
 import { saveState, loadState, clearSave } from './save';
 import { renderHud, type HudDeltas } from '../ui/hud';
-import { renderMap } from '../ui/map';
+import { renderMap, type Overlay } from '../ui/map';
+import { renderDistrictDetail } from '../ui/district-detail';
 import { renderDashboard } from '../ui/dashboard';
 import { renderFeed } from '../ui/feed';
 import { renderModal } from '../ui/modal';
@@ -21,6 +22,7 @@ import { renderDefeat } from '../ui/defeat';
 function bootstrap(): void {
   const hudEl = document.getElementById('hud')!;
   const mapEl = document.getElementById('map')!;
+  const detailEl = document.getElementById('district-detail-root')!;
   const dashboardEl = document.getElementById('dashboard')!;
   const feedEl = document.getElementById('feed')!;
   const modalEl = document.getElementById('modal-root')!;
@@ -36,6 +38,8 @@ function bootstrap(): void {
   updateAggregates(state);
 
   let speed: Speed = 1;
+  let overlay: Overlay = 'wealth';
+  let selectedDistrictId: string | null = null;
 
   // Trajectory tracking: compare each tick to the previous tick's reading so
   // the HUD can show "+0.6/mo" + arrow alongside the value. Lever-action
@@ -71,7 +75,28 @@ function bootstrap(): void {
       },
       lastDeltas,
     );
-    renderMap(state, mapEl);
+    renderMap(
+      state,
+      mapEl,
+      overlay,
+      (o) => {
+        overlay = o;
+        render();
+      },
+      selectedDistrictId,
+      (id) => {
+        selectedDistrictId = id === selectedDistrictId ? null : id;
+        render();
+      },
+    );
+    const selectedDistrict =
+      selectedDistrictId !== null
+        ? state.districts.find((d) => d.id === selectedDistrictId) ?? null
+        : null;
+    renderDistrictDetail(selectedDistrict, detailEl, () => {
+      selectedDistrictId = null;
+      render();
+    });
     // Skip re-rendering the dashboard if the user is mid-interaction with one
     // of its inputs — a full innerHTML wipe would destroy the focused element
     // and break drag/type. The dashboard re-renders on the next tick.
