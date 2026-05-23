@@ -1,6 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { pickEvent, fireEvent, processEvents, resolveCrisis, COOLDOWN_MONTHS } from './events';
+import {
+  pickEvent,
+  fireEvent,
+  processEvents,
+  resolveCrisis,
+  COOLDOWN_MONTHS,
+  GLOBAL_KIND_COOLDOWN_MONTHS,
+  MODAL_FIRE_PROBABILITY,
+} from './events';
 import { createInitialState } from './state';
+import { EVENT_CATALOG } from '../content/event-catalog';
 import type { Event, EventKind } from './types';
 
 function noopEffects(): void {}
@@ -101,6 +110,143 @@ describe('pickEvent', () => {
       expect(COOLDOWN_MONTHS.incident).toBe(6);
       expect(COOLDOWN_MONTHS.crisis).toBe(12);
       expect(COOLDOWN_MONTHS['self-provision']).toBe(12);
+    });
+  });
+
+  describe('global kind cooldown', () => {
+    it('excludes every crisis event while any crisis fired within the global crisis cooldown', () => {
+      const s = createInitialState();
+      s.month = 5;
+      // A different crisis event fired 2 months ago — that should lock out
+      // *all* crises from the picker (not just this specific event id).
+      s.eventLog.push({ month: 3, eventId: 'first', text: 'first' });
+      const cat: Event[] = [evt('first', 0, 'crisis'), evt('second', 10, 'crisis')];
+      const r = pickEvent(s, cat);
+      expect(r.event).toBeNull();
+    });
+
+    it('lets a crisis fire once the global kind cooldown expires', () => {
+      const s = createInitialState();
+      s.month = 30;
+      s.eventLog.push({ month: 1, eventId: 'first', text: 'first' });
+      const cat: Event[] = [evt('first', 0, 'crisis'), evt('second', 10, 'crisis')];
+      const r = pickEvent(s, cat);
+      expect(r.event?.id).toBe('second');
+    });
+
+    it('does not let a recent crisis suppress an ambient event', () => {
+      const s = createInitialState();
+      s.month = 5;
+      s.eventLog.push({ month: 3, eventId: 'shock', text: 'shock' });
+      const cat: Event[] = [
+        evt('shock', 0, 'crisis'), // recent crisis
+        evt('flavor', 10, 'ambient'), // ambient is independent of crisis cooldown
+      ];
+      const r = pickEvent(s, cat);
+      expect(r.event?.id).toBe('flavor');
+    });
+
+    it('exposes GLOBAL_KIND_COOLDOWN_MONTHS so balance can be tuned in one place', () => {
+      expect(GLOBAL_KIND_COOLDOWN_MONTHS.ambient).toBeGreaterThanOrEqual(0);
+      expect(GLOBAL_KIND_COOLDOWN_MONTHS.incident).toBeGreaterThan(0);
+      expect(GLOBAL_KIND_COOLDOWN_MONTHS.crisis).toBeGreaterThan(0);
+      expect(GLOBAL_KIND_COOLDOWN_MONTHS['self-provision']).toBeGreaterThan(0);
+    });
+  });
+
+  describe('modal fire probability gate', () => {
+    it('does not gate ambient events — they fire whenever weighted-eligible', () => {
+      const cat: Event[] = [evt('amb', 1, 'ambient')];
+      let fires = 0;
+      let rng = 7;
+      const N = 200;
+      for (let i = 0; i < N; i++) {
+        const s = createInitialState();
+        s.rng = rng;
+        const r = pickEvent(s, cat);
+        if (r.event) fires++;
+        rng = r.rngState;
+      }
+      expect(fires).toBe(N);
+    });
+
+    it('does not gate incident events either', () => {
+      const cat: Event[] = [evt('inc', 1, 'incident')];
+      let fires = 0;
+      let rng = 7;
+      const N = 200;
+      for (let i = 0; i < N; i++) {
+        const s = createInitialState();
+        s.rng = rng;
+        const r = pickEvent(s, cat);
+        if (r.event) fires++;
+        rng = r.rngState;
+      }
+      expect(fires).toBe(N);
+    });
+
+    it('throttles crisis fires to roughly MODAL_FIRE_PROBABILITY', () => {
+      const cat: Event[] = [evt('cri', 1, 'crisis')];
+      let fires = 0;
+      let rng = 7;
+      const N = 1000;
+      for (let i = 0; i < N; i++) {
+        const s = createInitialState();
+        s.rng = rng;
+        const r = pickEvent(s, cat);
+        if (r.event) fires++;
+        rng = r.rngState;
+      }
+      const expected = MODAL_FIRE_PROBABILITY * N;
+      // ±30% tolerance — statistical, not exact
+      expect(fires).toBeGreaterThan(expected * 0.7);
+      expect(fires).toBeLessThan(expected * 1.3);
+    });
+
+    it('throttles self-provision fires the same way', () => {
+      const cat: Event[] = [evt('sp', 1, 'self-provision')];
+      let fires = 0;
+      let rng = 7;
+      const N = 1000;
+      for (let i = 0; i < N; i++) {
+        const s = createInitialState();
+        s.rng = rng;
+        const r = pickEvent(s, cat);
+        if (r.event) fires++;
+        rng = r.rngState;
+      }
+      const expected = MODAL_FIRE_PROBABILITY * N;
+      expect(fires).toBeGreaterThan(expected * 0.7);
+      expect(fires).toBeLessThan(expected * 1.3);
+    });
+
+    it('exposes MODAL_FIRE_PROBABILITY so balance can be tuned in one place', () => {
+      expect(MODAL_FIRE_PROBABILITY).toBeGreaterThan(0);
+      expect(MODAL_FIRE_PROBABILITY).toBeLessThan(1);
+    });
+  });
+
+  describe('pacing under the real catalog (regression for BUG 1)', () => {
+    it('fires a modest number of modal events across 60 ticks when many qualify', () => {
+      const s = createInitialState();
+      // Configure the state so most self-provision and several crises qualify.
+      s.educationLevel = 0.4;
+      s.inflation = 28;
+      for (const d of s.districts) {
+        d.wealth = 25;
+        d.happiness = 30;
+        d.awareness = 40;
+      }
+      let modalCount = 0;
+      for (let i = 0; i < 60; i++) {
+        processEvents(s, EVENT_CATALOG, () => {
+          modalCount++;
+          return 0;
+        });
+        s.month += 1;
+      }
+      // Before the fix: ~30 modals in 60 ticks. After: should be much lower.
+      expect(modalCount).toBeLessThan(15);
     });
   });
 });
